@@ -543,7 +543,7 @@ class tms_expense(osv.osv):
                 
                 if not fuel_cost:
                     fuel_cost = float(self.pool.get('ir.config_parameter').get_param(cr, uid, 'tms_property_fuel_cost_for_discount', context=context)[0])
-                print "fuel_qty_diff: ", fuel_qty_diff
+
                 if fuel_qty_diff < 0.0: 
                     fuel_discount_prod_id = prod_obj.search(cr, uid, [('tms_category', '=', 'salary_discount'),('tms_default_fuel_discount','=', 1),('active','=', 1)], limit=1)
                     if not fuel_discount_prod_id:
@@ -554,7 +554,7 @@ class tms_expense(osv.osv):
                     xline = {                                
                         'expense_id'        : expense.id,
                         'line_type'         : fuel_discount_prod.tms_category,
-                        'name'              : fuel_discount_prod.name + ' - ' + _('Travel Expense: ') + rec.name, 
+                        'name'              : fuel_discount_prod.name + ' - ' + _('Travel Expense: ') + expense.name, 
                         'sequence'          : 200,
                         'product_id'        : fuel_discount_prod.id,
                         'product_uom'       : fuel_discount_prod.uom_id.id,
@@ -740,14 +740,7 @@ class tms_expense(osv.osv):
                     distance_real += travel.distance_extraction
                     distance_routes += travel.distance_route
                 for travel in expense.travel_ids:
-                    #print "====\nTravel: ", travel.name
-                    #print "travel.distance_route : ", travel.distance_route
-                    #print "distance_routes: ", distance_routes
-                    #print "distance_real: ", distance_real
-                    #print "expense.distance_real: ", expense.distance_real
-                    #print "travel.distance_extraction: ", travel.distance_extraction 
                     xdistance = (travel.distance_route / distance_routes) * expense.distance_real if distance_real != expense.distance_real else travel.distance_extraction
-                    #print "xdistance: ", xdistance
                     odom_obj.create_odometer_log(cr, uid, expense.id, travel.id, expense.vehicle_id.id, xdistance)
                     if travel.trailer1_id and travel.trailer1_id.id:
                         odom_obj.create_odometer_log(cr, uid, expense.id, travel.id, travel.trailer1_id.id, xdistance)
@@ -1232,11 +1225,9 @@ class tms_expense_invoice(osv.osv_memory):
                                             (line.product_id.name, line.product_id.id,))
                             inv_id = False
                             if line.is_invoice:
-                                #print "Entra a crear la factura"
                                 inv_id = self.create_supplier_invoice(cr, uid, line)
                                 invoice_ids.append(inv_id)
                                 yres = expense_line_obj.write(cr, uid, [line.id], {'invoice_id': inv_id})
-                            #print "inv_id: ", inv_id
 
                             ### Creamos la partida de cada Gasto "Valido"
                             move_line = (0,0, {
@@ -1255,7 +1246,6 @@ class tms_expense_invoice(osv.osv_memory):
                                 'sale_shop_id'      : expense.shop_id.id,
                                 'partner_id'        : expense.employee_id.address_home_id.id if not line.is_invoice else line.partner_id.id,
                                 })
-                            #print "move_line: ", move_line
                             move_lines.append(move_line)
                             notes += '\n' + line.name
                             
@@ -1353,7 +1343,6 @@ class tms_expense_invoice(osv.osv_memory):
                         'date'              : expense.date,
                         'period_id'         : period_id[0],
                         }
-                    #print "move: ", move
                     move_id = move_obj.create(cr, uid, move)
                     
                     if move_id:
@@ -1371,38 +1360,17 @@ class tms_expense_invoice(osv.osv_memory):
         if context is None:
             context = {}
         move_line_obj = self.pool.get('account.move.line')
-        #print "move_id: ", move_id
-        #for line in self.pool.get('account.move').browse(cr, uid, [move_id])[0].line_id:
-            #print "------------------------------"
-            #print "   id    |      ref         |         code         |         description         |    debit      |     credit     "
-            #print "  %s     |   %s    |  %s    |   %s  |   %s   |   %s   |   %s   |" % (line.id, line.ref, line.name, line.account_id.code, line.account_id.name, line.debit, line.credit)
-
 
         for invoice in self.pool.get('account.invoice').browse(cr, uid, invoice_ids):
-            #print "invoice.name: ", invoice.name
-            #print "invoice.origin: ", invoice.origin
-            #print "invoice.id: ", invoice.id
-            #print "ref ilike |%s" % (invoice.id)
             xid = '%s' % (invoice.id)
-            #print "xid: ", xid
 
             res = move_line_obj.search(cr, uid, [('move_id','=',move_id),('name','ilike',xid)])
             if not res:
                 raise osv.except_osv('Error !',
                                     _('Move line was not found, please check your data...'))
-            for line in move_line_obj.browse(cr, uid, res):
-                print "Cuenta: %s - %s"% (line.account_id.code, line.account_id.name)
-                print "Debit: ", line.debit
-                print "Credit: ", line.credit
-                print "Partner: (%s) %s" % (line.partner_id.id, line.partner_id.name)                                
             for move_line in invoice.move_id.line_id:
                 if move_line.account_id.type=='payable':
                     lines = res + [move_line.id]
-                    print "Cuenta: %s - %s"% (move_line.account_id.code, move_line.account_id.name)
-                    print "Debit: ", move_line.debit
-                    print "Credit: ", move_line.credit
-                    print "Partner: (%s) %s" % (move_line.partner_id.id, move_line.partner_id.name)                                
-                    print "lines to reconcile: ", lines
                     res2 = move_line_obj.reconcile(cr, uid, lines, context=context)
         return
         
@@ -1447,7 +1415,7 @@ class tms_expense_invoice(osv.osv_memory):
             'employee_id'           : line.expense_id.employee_id.id,
             'sale_shop_id'          : line.expense_id.shop_id.id,
             })
-        #print "inv_line: ", inv_line
+
 
         notes = line.expense_id.name + ' - ' + line.product_id.name
 
@@ -1472,11 +1440,8 @@ class tms_expense_invoice(osv.osv_memory):
 
         inv_id = invoice_obj.create(cr, uid, inv)
         if line.special_tax_amount:
-            print "Si entra por el IEPS"
             invoice_obj.button_reset_taxes(cr, uid, [inv_id])
             for tax_line in invoice_obj.browse(cr, uid, inv_id).tax_line:
-                print "tax_line.name: ", tax_line.name
-                print "tax_line.amount: ", tax_line.amount
                 if tax_line.amount==0.0:
                     invoice_tax_obj.write(cr, uid, [tax_line.id], {'amount':line.special_tax_amount})
         wf_service = netsvc.LocalService('workflow')
