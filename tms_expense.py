@@ -177,7 +177,7 @@ class tms_expense(osv.osv):
         for expense in self.browse(cr, uid, ids, context=context):
             fuel=0.0
             if expense.fuel_qty_real and expense.fuel_qty:                
-                res[expense.id] = {'fuel_diff': float(expense.fuel_qty) - float(expense.fuel_qty_real),
+                res[expense.id] = {'fuel_diff': float(expense.fuel_qty_real) - float(expense.fuel_qty),
                                    'global_fuel_efficiency_real': (expense.distance_real / expense.fuel_qty_real) if expense.fuel_qty_real else 0.0,
                                   }
         return res
@@ -525,8 +525,8 @@ class tms_expense(osv.osv):
                     
             # Revisamos si se tiene que hacer Descuento por Rendimiento bajo
             if int(self.pool.get('ir.config_parameter').get_param(cr, uid, 'tms_property_discount_for_low_fuel_efficiency_performance', context=context)[0]) \
-                and expense.fuel_qty_real and expense.fuel_qty and expense.fuel_qty_real > expense.fuel_qty:
-                fuel_qty_diff = expense.fuel_qty - expense.fuel_qty_real
+                and expense.fuel_qty_real and expense.fuel_qty and expense.fuel_qty_real < expense.fuel_qty:
+                fuel_qty_diff = expense.fuel_qty_real - expense.fuel_qty
                 fuel_id_closed = fuelvoucher_obj.search(cr, uid, [('state','=','closed')], limit=1, order="date desc")
                 fuel_id_confirmed = fuelvoucher_obj.search(cr, uid, [('state','=','confirmed')], limit=1, order="date desc")
                 fuel_cost = 0
@@ -625,7 +625,7 @@ class tms_expense(osv.osv):
         if fuel_qty_real:
             res = {'value': 
                    {'global_fuel_efficiency_real' : float(distance_real) / float(fuel_qty_real),
-                    'fuel_diff'     : (fuel_qty - fuel_qty_real) if fuel_qty_real else 0.0,
+                    'fuel_diff'     : (fuel_qty_real - fuel_qty) if fuel_qty_real else 0.0,
                    }
                   }
         return res
