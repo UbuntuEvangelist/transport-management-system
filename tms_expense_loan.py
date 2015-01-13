@@ -80,6 +80,7 @@ class tms_expense_loan(osv.osv):
                                 ('cancel', 'Cancelled')
                                 ], 'State', readonly=True, help="State of the Driver Loan. ", select=True),
         'discount_method' : fields.selection([
+                                ('each', 'Each Travel Expense Record'),
                                 ('weekly', 'Weekly'),
                                 ('fortnightly', 'Fortnightly'),
                                 ('monthly', 'Monthly'),
@@ -208,7 +209,7 @@ class tms_expense_loan(osv.osv):
         expense_line_obj = self.pool.get('tms.expense.line')
         expense_obj = self.pool.get('tms.expense')
         res = expense_line_obj.search(cr, uid, [('expense_id', '=', expense_id),('control','=', 1),('loan_id','!=',False)])
-        print "res: ", res
+        #print "res: ", res
         if len(res):
             loan_ids = []
             expense_line_ids = []
@@ -227,10 +228,12 @@ class tms_expense_loan(osv.osv):
             data = filter(None, map(lambda x:x[0], cr.fetchall()))
             date = data[0] if data else rec.date
             fecha_liq = expense_obj.read(cr, uid, [expense_id], ['date'])[0]['date']
-            print "fecha_liq: ", fecha_liq
+            #print "fecha_liq: ", fecha_liq
             dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
             product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
-            xfactor = 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
+            if rec.discount_method == 'each' and not dur:
+                continue
+            xfactor = 1 if rec.discount_method == 'each' else 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
             rango = 1 if not int(dur.days / xfactor) else int(dur.days / xfactor) + 1
             balance = rec.balance
             while rango and balance:
