@@ -260,7 +260,7 @@ class tms_expense_loan(osv.osv):
                     for (id,name) in self.name_get(cr, uid, [rec.id]):                
                         message =  _("Loan '%s' has been Closed.") % rec.name 
                     self.log(cr, uid, id, message)
-            else:                
+            elif rec.discount_method in ('weekly','fortnightly','monthy'):                
                 xfactor = 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
                 rango = 1 if not int(dur.days / xfactor) else int(dur.days / xfactor) + 1
                 balance = rec.balance
