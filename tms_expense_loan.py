@@ -269,7 +269,7 @@ class tms_expense_loan(osv.osv):
                                     (select id from tms_expense_loan where employee_id=%s
                                                     and discount_method='each' and state in ('closed','confirmed'))
                                  order by date desc limit 1;
-                """ % (rec.employee_id))
+                """ % (rec.employee_id.id))
                 data = filter(None, map(lambda x:x[0], cr.fetchall()))           
                 date = data and data[0] or rec.date
                 if date >= fecha_liq:
