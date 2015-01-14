@@ -224,43 +224,15 @@ class tms_expense_loan(osv.osv):
         prod_obj = self.pool.get('product.product')
         loan_ids = self.search(cr, uid, [('employee_id', '=', employee_id),('state','=','confirmed'),('balance', '>', 0.0)])
         flag_each = True
+        fecha_liq = expense_obj.read(cr, uid, [expense_id], ['date'])[0]['date']
         for rec in self.browse(cr, uid, loan_ids, context=context):
-            cr.execute('select date from tms_expense_line where loan_id = %s order by date desc limit 1' % (rec.id))
-            data = filter(None, map(lambda x:x[0], cr.fetchall()))
-            date = data[0] if data else rec.date
-            fecha_liq = expense_obj.read(cr, uid, [expense_id], ['date'])[0]['date']
-            #print "fecha_liq: ", fecha_liq
-            dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
-            product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
-            if rec.discount_method == 'each' and dur.days <= 0:
-                continue
-            elif rec.discount_method == 'each' and flag_each:
-                flag_each = False
-                balance = rec.balance
-                discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
-                discount = balance if discount > balance else discount
-                balance -= discount
-                xline = {
-                    'expense_id'        : expense_id,
-                    'line_type'         : product.tms_category,
-                    'name'              : product.name + ' - ' + rec.name, 
-                    'sequence'          : 100,
-                    'product_id'        : product.id,
-                    'product_uom'       : product.uom_id.id,
-                    'product_uom_qty'   : 1,
-                    'price_unit'        : discount * -1.0,
-                    'control'           : True,
-                    'loan_id'           : rec.id,
-                    #'operation_id'      : travel.operation_id.id,
-                    #'tax_id'            : [(6, 0, [x.id for x in product.supplier_taxes_id])],
-                    }                
-                res = expense_line_obj.create(cr, uid, xline)
-                if discount >= rec.balance:
-                    self.write(cr, uid, [rec.id], {'state':'closed', 'closed_by' : uid, 'date_closed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
-                    for (id,name) in self.name_get(cr, uid, [rec.id]):                
-                        message =  _("Loan '%s' has been Closed.") % rec.name 
-                    self.log(cr, uid, id, message)
-            elif rec.discount_method in ('weekly','fortnightly','monthy'):                
+            if rec.discount_method in ('weekly','fortnightly','monthy'):
+                cr.execute('select date from tms_expense_line where loan_id = %s order by date desc limit 1' % (rec.id))
+                data = filter(None, map(lambda x:x[0], cr.fetchall()))
+                date = data[0] if data else rec.date
+                #print "fecha_liq: ", fecha_liq
+                dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
+                product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
                 xfactor = 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
                 rango = 1 if not int(dur.days / xfactor) else int(dur.days / xfactor) + 1
                 balance = rec.balance
@@ -289,6 +261,53 @@ class tms_expense_loan(osv.osv):
                         for (id,name) in self.name_get(cr, uid, [rec.id]):                
                             message =  _("Loan '%s' has been Closed.") % rec.name 
                         self.log(cr, uid, id, message)
+            
+            
+            elif rec.discount_method == 'each' and flag_each:
+                # Buscaoms el ultimo descuento de prestamo de tipo "En cada liquidacion"
+                cr.execute("""select date from tms_expense_line where loan_id in 
+                                    (select id from tms_expense_loan where employee_id=%s
+                                                    and discount_method='each' and state in ('closed','confirmed'))
+                                 order by date desc limit 1;
+                """ % (rec.employee_id))
+                data = filter(None, map(lambda x:x[0], cr.fetchall()))           
+                date = data and data[0] or rec.date
+                if date >= fecha_liq:
+                    continue
+                flag_each = False
+                cr.execute('select date from tms_expense_line where loan_id = %s order by date desc limit 1' % (rec.id))
+                data = filter(None, map(lambda x:x[0], cr.fetchall()))
+                date = data[0] if data else rec.date
+                
+                #print "fecha_liq: ", fecha_liq
+                dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
+                product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
+                
+                balance = rec.balance
+                discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
+                discount = balance if discount > balance else discount
+                balance -= discount
+                xline = {
+                    'expense_id'        : expense_id,
+                    'line_type'         : product.tms_category,
+                    'name'              : product.name + ' - ' + rec.name, 
+                    'sequence'          : 100,
+                    'product_id'        : product.id,
+                    'product_uom'       : product.uom_id.id,
+                    'product_uom_qty'   : 1,
+                    'price_unit'        : discount * -1.0,
+                    'control'           : True,
+                    'loan_id'           : rec.id,
+                    #'operation_id'      : travel.operation_id.id,
+                    #'tax_id'            : [(6, 0, [x.id for x in product.supplier_taxes_id])],
+                    }                
+                res = expense_line_obj.create(cr, uid, xline)
+                if discount >= rec.balance:
+                    self.write(cr, uid, [rec.id], {'state':'closed', 'closed_by' : uid, 'date_closed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
+                    for (id,name) in self.name_get(cr, uid, [rec.id]):                
+                        message =  _("Loan '%s' has been Closed.") % rec.name 
+                    self.log(cr, uid, id, message)
+
         return
 
 
