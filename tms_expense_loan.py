@@ -223,6 +223,7 @@ class tms_expense_loan(osv.osv):
 
         prod_obj = self.pool.get('product.product')
         loan_ids = self.search(cr, uid, [('employee_id', '=', employee_id),('state','=','confirmed'),('balance', '>', 0.0)])
+        flag_each = True
         for rec in self.browse(cr, uid, loan_ids, context=context):
             cr.execute('select date from tms_expense_line where loan_id = %s order by date desc limit 1' % (rec.id))
             data = filter(None, map(lambda x:x[0], cr.fetchall()))
@@ -231,9 +232,10 @@ class tms_expense_loan(osv.osv):
             #print "fecha_liq: ", fecha_liq
             dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
             product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
-            if rec.discount_method == 'each' and dur.days > 0:
+            if rec.discount_method == 'each' and dur.days <= 0:
                 continue
-            elif rec.discount_method == 'each':
+            elif rec.discount_method == 'each' and flag_each:
+                flag_each = False
                 balance = rec.balance
                 discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
                 discount = balance if discount > balance else discount
