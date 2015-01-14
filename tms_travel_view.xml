@@ -173,7 +173,7 @@ TMS.travel
                         <notebook colspan="4">
                             <page string="Fuel Vouchers" attrs="{'invisible':[('supplier_unit','=',True)]}">
                                 <group>
-                                    <field name="fuelvoucher_ids" nolabel="1" 
+                                    <field name="fuelvoucher_ids" nolabel="1" attrs="{'readonly':[('state','in',('cancel','closed'))]}"
                                              context="{'default_travel_id': active_id, 'default_operation_id' : operation_id, 'default_employee_id': employee_id, 'default_employee1_id': employee_id,'default_employee2_id': employee2_id,}" >
                                         <tree string="TMS Fuel Vouchers">
                                             <field name="name" />
@@ -191,9 +191,9 @@ TMS.travel
                             </page>                        
                             <page string="Advances" attrs="{'invisible':[('supplier_unit','=',True)]}">
                                 <group>
-                            	    <field name="advance_ids" nolabel="1"  
+                            	    <field name="advance_ids" nolabel="1" 
                                            context="{'default_travel_id': active_id, 'default_operation_id' : operation_id, 'default_employee_id': employee_id, 'default_employee1_id': employee_id,'default_employee2_id': employee2_id,}" 
-                                           attrs="{'readonly':[('supplier_unit','=',True)]}"
+                                           attrs="{'readonly':['|',('supplier_unit','=',True),('state','in',('cancel','closed'))]}"
                                            domain="[('state','!=','cancel')]">
                                         <tree string="TMS Advances">
                                             <field name="name" />
@@ -213,7 +213,7 @@ TMS.travel
                             </page>
                             <page string="Waybills">
                                 <group>
-                                    <field name="waybill_ids" nolabel="1">
+                                    <field name="waybill_ids" nolabel="1" attrs="{'readonly':[('state','in',('cancel','closed'))]}">
                                         <tree string="Waybills" colors="red:state=='cancel';green:state=='approved';blue:state=='confirmed';">
                                             <button name="action_approve" states="draft" string="Approve" type="object" icon="gtk-go-forward" groups="tms.group_waybill_approve"/>
                                             <button name="action_confirm" states="approved" string="Confirm" type="object" icon="gtk-ok" groups="tms.group_waybill_confirm"/>
@@ -234,7 +234,7 @@ TMS.travel
 					        <page string="Factor Driver" attrs="{'invisible':[('supplier_unit','=',True)]}">
                                 <group>
                                     <separator string="Driver Salary Factors" colspan="4"/>
-                                    <field name="expense_driver_factor" 
+                                    <field name="expense_driver_factor" attrs="{'readonly':[('state','in',('cancel','closed'))]}"
                                             context="{'default_travel_id': active_id,'default_category':'driver'}"
                                             colspan="4" nolabel="1"/>
                                 </group>
@@ -242,7 +242,8 @@ TMS.travel
                             <page string="History">
                                 <group>
                                     <separator string="Travel history" colspan="4"/>
-                                    <field name="event_ids" nolabel="1" context="{'default_travel_id': active_id}" >
+                                    <field name="event_ids" nolabel="1" context="{'default_travel_id': active_id}" 
+                                           attrs="{'readonly':[('state','in',('cancel','closed'))]}">
                                         <tree>
                                             <field name="date"/>
                                             <field name="category_id"/>
