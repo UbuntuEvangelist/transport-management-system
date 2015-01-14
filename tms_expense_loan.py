@@ -234,6 +234,7 @@ class tms_expense_loan(osv.osv):
             if rec.discount_method == 'each' and not dur:
                 continue
             elif rec.discount_method == 'each':
+                balance = rec.balance
                 discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
                 discount = balance if discount > balance else discount
                 balance -= discount
