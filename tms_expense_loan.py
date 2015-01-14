@@ -231,7 +231,7 @@ class tms_expense_loan(osv.osv):
             #print "fecha_liq: ", fecha_liq
             dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
             product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
-            if rec.discount_method == 'each' and dur > 0:
+            if rec.discount_method == 'each' and dur.days > 0:
                 continue
             elif rec.discount_method == 'each':
                 balance = rec.balance
