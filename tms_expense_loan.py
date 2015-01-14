@@ -233,11 +233,7 @@ class tms_expense_loan(osv.osv):
             product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
             if rec.discount_method == 'each' and not dur:
                 continue
-            xfactor = 1 if rec.discount_method == 'each' else 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
-            rango = 1 if not int(dur.days / xfactor) else int(dur.days / xfactor) + 1
-            balance = rec.balance
-            while rango and balance:
-                rango -= 1
+            elif rec.discount_method == 'each':
                 discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
                 discount = balance if discount > balance else discount
                 balance -= discount
@@ -261,6 +257,35 @@ class tms_expense_loan(osv.osv):
                     for (id,name) in self.name_get(cr, uid, [rec.id]):                
                         message =  _("Loan '%s' has been Closed.") % rec.name 
                     self.log(cr, uid, id, message)
+            else:                
+                xfactor = 7 if rec.discount_method == 'weekly' else 14.0 if rec.discount_method == 'fortnightly' else 28.0
+                rango = 1 if not int(dur.days / xfactor) else int(dur.days / xfactor) + 1
+                balance = rec.balance
+                while rango and balance:
+                    rango -= 1
+                    discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
+                    discount = balance if discount > balance else discount
+                    balance -= discount
+                    xline = {
+                        'expense_id'        : expense_id,
+                        'line_type'         : product.tms_category,
+                        'name'              : product.name + ' - ' + rec.name, 
+                        'sequence'          : 100,
+                        'product_id'        : product.id,
+                        'product_uom'       : product.uom_id.id,
+                        'product_uom_qty'   : 1,
+                        'price_unit'        : discount * -1.0,
+                        'control'           : True,
+                        'loan_id'           : rec.id,
+                        #'operation_id'      : travel.operation_id.id,
+                        #'tax_id'            : [(6, 0, [x.id for x in product.supplier_taxes_id])],
+                        }                
+                    res = expense_line_obj.create(cr, uid, xline)
+                    if discount >= rec.balance:
+                        self.write(cr, uid, [rec.id], {'state':'closed', 'closed_by' : uid, 'date_closed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
+                        for (id,name) in self.name_get(cr, uid, [rec.id]):                
+                            message =  _("Loan '%s' has been Closed.") % rec.name 
+                        self.log(cr, uid, id, message)
         return
 
 
