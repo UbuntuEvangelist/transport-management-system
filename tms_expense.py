@@ -983,21 +983,22 @@ class tms_expense_cancel(osv.osv_memory):
                             _('Could not cancel Expense Record!'),
                             _('This Expense Record\'s is already paid'))
                     return False
-                
-                reconcile_ids = []
-                invoice_ids = []
-                for expense_line in expense.expense_line:
-                    if expense_line.is_invoice:
-                        invoice_ids.append(expense_line.invoice_id.id)
-                        for move_line in expense_line.invoice_id.move_id.line_id:
-                            if move_line.reconcile_id:
-                                reconcile_ids.append(move_line.reconcile_id.id)
-                if reconcile_ids:
-                    obj_move_reconcile.unlink(cr, uid, reconcile_ids, context=context)
-                
-                if invoice_ids:
-                    wres = invoice_obj.action_cancel(cr, uid, invoice_ids, context)
-                    #wres = invoice_obj.unlink(cr, uid, invoice_ids, context)
+
+                if expense.state == 'confirmed': # Unreconcile & Cancel Invoices linked to this Travel Expense Record
+                    reconcile_ids = []
+                    invoice_ids = []
+                    for expense_line in expense.expense_line:
+                        if expense_line.is_invoice:
+                            invoice_ids.append(expense_line.invoice_id.id)
+                            for move_line in expense_line.invoice_id.move_id.line_id:
+                                if move_line.reconcile_id:
+                                    reconcile_ids.append(move_line.reconcile_id.id)
+                    if reconcile_ids:
+                        obj_move_reconcile.unlink(cr, uid, reconcile_ids, context=context)
+
+                    if invoice_ids:
+                        wres = invoice_obj.action_cancel(cr, uid, invoice_ids, context)
+                        #wres = invoice_obj.unlink(cr, uid, invoice_ids, context)
                 
                 move_id = expense.move_id.id
                 move_state = expense.move_id.state
