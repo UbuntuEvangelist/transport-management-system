@@ -1164,7 +1164,6 @@ class tms_waybill_invoice(osv.osv_memory):
                                      _('You have not defined Client account...'))            
                     
                 partner = partner_obj.browse(cr,uid,data[0])
- 
                 cr.execute("select id from tms_waybill where (invoice_id is null or (select account_invoice.state from account_invoice where account_invoice.id = tms_waybill.invoice_id)='cancel') and (state='confirmed' or (state='approved' and billing_policy='automatic')) and partner_id=" + str(data[0]) + ' and currency_id=' + str(data[1]) + " and id IN %s", (tuple(record_ids),))
                 waybill_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
                 #print "waybill_ids : ", waybill_ids
@@ -1174,6 +1173,9 @@ class tms_waybill_invoice(osv.osv_memory):
                 empl_name = ''
                 product_shipped_grouped = {}
                 for waybill in waybill_obj.browse(cr,uid,waybill_ids):
+                    fpos = waybill.partner_id.property_account_position.id or False
+                    fpos = fpos and account_fiscal_obj.browse(cr, uid, fpos, context=context) or False
+
                     for shipped_prod in waybill.waybill_shipped_product:
                         # *****                            
                         val={'product_name' : shipped_prod.product_id.name,
@@ -1206,6 +1208,9 @@ class tms_waybill_invoice(osv.osv_memory):
                                                     (line.product_id.name, line.product_id.id,))
 
                                 a = account_fiscal_obj.map_account(cr, uid, False, a)
+                                
+            
+                                
                                 inv_line = (0,0, {
                                     'name': line.name,
                                     'origin': line.waybill_id.name,
@@ -1214,7 +1219,7 @@ class tms_waybill_invoice(osv.osv_memory):
                                     'quantity': line.product_uom_qty,
                                     'uos_id': line.product_uom.id,
                                     'product_id': line.product_id.id,
-                                    'invoice_line_tax_id': [(6, 0, [x.id for x in line.product_id.taxes_id])],
+                                    'invoice_line_tax_id': [(6, 0, [_w for _w in account_fiscal_obj.map_tax(cr, uid, fpos, line.product_id.taxes_id)])],
                                     'vehicle_id'    : line.waybill_id.travel_id.unit_id.id if line.waybill_id.travel_id else False,
                                     'employee_id'   : line.waybill_id.travel_id.employee_id.id if line.waybill_id.travel_id else False,
                                     'sale_shop_id'  : line.waybill_id.shop_id.id,
