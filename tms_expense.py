@@ -1116,7 +1116,7 @@ class tms_expense_payment(osv.osv_memory):
         return res
 
 
-# Wizard que permite generar la factura a pagar correspondiente a la liquidación del Operador
+# Wizard que permite generar la poliza con el monto a pagar correspondiente a la liquidación del Operador
 class tms_expense_invoice(osv.osv_memory):
 
     """ To create invoice for each Expense"""
@@ -1269,6 +1269,8 @@ class tms_expense_invoice(osv.osv_memory):
                                     'credit'        : round(abs(tax_amount), precision) if tax_amount <= 0.0 else 0.0,
                                     'journal_id'    : journal_id,
                                     'period_id'     : period_id[0],
+                                    'tax_id_secondary' : tax.id if line.is_invoice else False,
+                                    'amount_base'   : round(abs(line.price_subtotal),precision) if line.is_invoice else False,
                                     })
                                 
                                 move_lines.append(move_line)
@@ -1290,6 +1292,8 @@ class tms_expense_invoice(osv.osv_memory):
                                         'credit'        : round(abs(tax_amount), precision) if tax_amount > 0.0 else 0.0,
                                         'journal_id'    : journal_id,
                                         'period_id'     : period_id[0],
+                                        #'tax_id_secondary' : tax.id,
+                                        #'amount_base'   : round(abs(line.price_subtotal),precision),                                            
                                         })
 
                                     move_lines.append(move_line)
