@@ -165,8 +165,8 @@ class tms_waybill(osv.osv):
     def _invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for rec in self.browse(cr, uid, ids, context=context):
-            print "rec.invoice_id.id: ", rec.invoice_id.id
-            print "rec.invoice_id.state: ", rec.invoice_id.state
+            #print "rec.invoice_id.id: ", rec.invoice_id.id
+            #print "rec.invoice_id.state: ", rec.invoice_id.state
             invoiced = bool(rec.invoice_id and rec.invoice_id.id and rec.invoice_id.state != 'cancel' or False)
             paid = bool(rec.invoice_id and rec.invoice_id.state == 'paid' or False)
             res[rec.id] =  { 'invoiced': invoiced,
