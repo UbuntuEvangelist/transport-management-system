@@ -164,12 +164,14 @@ class tms_waybill(osv.osv):
 
     def _invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for record in self.browse(cr, uid, ids, context=context):
-            invoiced = bool(record.invoice_id and record.invoice_id.id and record.invoice_id.state != 'cancel')
-            paid = bool(record.invoice_id and record.invoice_id.state == 'paid')
-            res[record.id] =  { 'invoiced': invoiced,
+        for rec in self.browse(cr, uid, ids, context=context):
+            print "rec.invoice_id.id: ", rec.invoice_id.id
+            print "rec.invoice_id.state: ", rec.invoice_id.state
+            invoiced = bool(rec.invoice_id and rec.invoice_id.id and rec.invoice_id.state != 'cancel' or False)
+            paid = bool(rec.invoice_id and rec.invoice_id.state == 'paid' or False)
+            res[rec.id] =  { 'invoiced': invoiced,
                                 'invoice_paid': paid,
-                                'invoice_name': record.invoice_id and record.invoice_id.state != 'cancel' and record.invoice_id.reference or '',
+                                'invoice_name': rec.invoice_id and rec.invoice_id.state != 'cancel' and rec.invoice_id.reference or '',
                                 }
         return res
 
@@ -177,11 +179,13 @@ class tms_waybill(osv.osv):
     def _supplier_invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for record in self.browse(cr, uid, ids, context=context):
-            invoiced = bool(record.invoice_id and record.invoice_id.id and record.invoice_id.state != 'cancel')
-            paid = bool(record.invoice_id and record.invoice_id.state == 'paid')
-            res[record.id] =  { 'supplier_invoiced': invoiced,
-                                'supplier_invoice_paid': paid,
-                                'supplier_invoice_name': record.invoice_id.supplier_invoice_number or record.invoice_id.reference
+            xinvoiced = bool(record.supplier_invoice_id and record.supplier_invoice_id.id and record.supplier_invoice_id.state != 'cancel' or False)
+            xpaid = bool(record.invoice_id and record.invoice_id.state == 'paid')
+            res[record.id] =  { 'supplier_invoiced': xinvoiced,
+                                'supplier_invoice_paid': xpaid,
+                                'supplier_invoice_name': record.supplier_invoice_id and record.supplier_invoice_id.state != 'cancel' and\
+                                                         (record.supplier_invoice_id.supplier_invoice_number or\
+                                                         record.supplier_invoice_id.reference) or False
                                 }
         return res
 
