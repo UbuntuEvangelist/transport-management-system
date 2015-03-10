@@ -165,11 +165,11 @@ class tms_waybill(osv.osv):
     def _invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for record in self.browse(cr, uid, ids, context=context):
-            invoiced = (record.invoice_id.id)
-            paid = (record.invoice_id.state == 'paid') if record.invoice_id.id else False
+            invoiced = bool(record.invoice_id and record.invoice_id.id and record.invoice_id.state != 'cancel')
+            paid = bool(record.invoice_id and record.invoice_id.state == 'paid')
             res[record.id] =  { 'invoiced': invoiced,
                                 'invoice_paid': paid,
-                                'invoice_name': record.invoice_id.reference
+                                'invoice_name': record.invoice_id and record.invoice_id.state != 'cancel' and record.invoice_id.reference or '',
                                 }
         return res
 
@@ -177,8 +177,8 @@ class tms_waybill(osv.osv):
     def _supplier_invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for record in self.browse(cr, uid, ids, context=context):
-            invoiced = (record.supplier_invoice_id.id)
-            paid = (record.supplier_invoice_id.state == 'paid') if record.supplier_invoice_id.id else False
+            invoiced = bool(record.invoice_id and record.invoice_id.id and record.invoice_id.state != 'cancel')
+            paid = bool(record.invoice_id and record.invoice_id.state == 'paid')
             res[record.id] =  { 'supplier_invoiced': invoiced,
                                 'supplier_invoice_paid': paid,
                                 'supplier_invoice_name': record.invoice_id.supplier_invoice_number or record.invoice_id.reference
@@ -255,6 +255,20 @@ class tms_waybill(osv.osv):
             result[line.waybill_id.id] = True
         return result.keys()
 
+    def _get_invoice(self, cr, uid, ids, context=None):
+        result = {}
+        for invoice in self.pool.get('account.invoice').browse(cr, uid, ids, context=context):            
+            for waybill in invoice.waybill_ids:
+                result[waybill.id] = True
+        return result.keys()
+
+    def _get_supplier_invoice(self, cr, uid, ids, context=None):
+        result = {}
+        for invoice in self.pool.get('account.invoice').browse(cr, uid, ids, context=context):
+            for waybill in invoice.waybill_ids:
+                result[waybill.id] = True        
+        return result.keys()
+    
 
     _columns = {
         'tax_line'          : fields.one2many('tms.waybill.taxes', 'waybill_id', 'Tax Lines', readonly=True, states={'draft':[('readonly',False)]}),
@@ -316,16 +330,40 @@ class tms_waybill(osv.osv):
         'shipped'          : fields.boolean('Delivered', readonly=True, help="It indicates that the Waybill has been delivered. This field is updated only after the scheduler(s) have been launched."),
 
         'invoice_id'       : fields.many2one('account.invoice','Invoice Record', readonly=True),
-        'invoiced'         :  fields.function(_invoiced, method=True, string='Invoiced', type='boolean', multi='invoiced', store=True),
-        'invoice_paid'     :  fields.function(_invoiced, method=True, string='Paid', type='boolean', multi='invoiced', store=True),
-        'invoice_name'     :  fields.function(_invoiced, method=True, string='Invoice', type='char', size=64, multi='invoiced', store=True),
+        'invoiced'         : fields.function(_invoiced, method=True, string='Invoiced', type='boolean', multi=True,
+                                             store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                    'account.invoice': (_get_invoice, ['state'], 20)
+                                                   },
+                                             ),
+        'invoice_paid'     : fields.function(_invoiced, method=True, string='Paid', type='boolean', multi=True,
+                                              store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                    'account.invoice': (_get_invoice, ['state'], 20)
+                                                    }
+                                             ),
+        'invoice_name'     : fields.function(_invoiced, method=True, string='Invoice', type='char', size=64, multi=True,
+                                             store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                    'account.invoice': (_get_invoice, ['state'], 20)
+                                                   }
+                                            ),
 
         'supplier_invoice_id': fields.many2one('account.invoice','Supplier Invoice Rec', readonly=True),
-        'supplier_invoiced':  fields.function(_supplier_invoiced, method=True, string='Supplier Invoiced', type='boolean', multi='supplier_invoiced', store=True),
-        'supplier_invoice_paid':  fields.function(_supplier_invoiced, method=True, string='Supplier Invoice Paid', type='boolean', multi='invoiced', store=True),
-        'supplier_invoice_name':  fields.function(_supplier_invoiced, method=True, string='Supplier Invoice', type='char', size=64, multi='invoiced', store=True),
+        'supplier_invoiced':     fields.function(_supplier_invoiced, method=True, string='Supplier Invoiced', type='boolean', multi=True,
+                                                store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                       'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                    }
+                                                ),
+        'supplier_invoice_paid': fields.function(_supplier_invoiced, method=True, string='Supplier Invoice Paid', type='boolean', multi='invoiced', 
+                                                 store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                        'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                       }
+                                                ),
+        'supplier_invoice_name': fields.function(_supplier_invoiced, method=True, string='Supplier Invoice', type='char', size=64, multi='invoiced', 
+                                                 store={'tms.waybill': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                        'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                       }
+                                                ),
         'supplier_invoiced_by' : fields.many2one('res.users', 'Suppl. Invoiced by', readonly=True),
-        'supplier_invoiced_date'      : fields.datetime('Suppl. Inv. Date', readonly=True, select=True),
+        'supplier_invoiced_date' : fields.datetime('Suppl. Inv. Date', readonly=True, select=True),
 
         'waybill_line'     : fields.one2many('tms.waybill.line', 'waybill_id', 'Waybill Lines', readonly=False, states={'confirmed': [('readonly', True)]}),
         'waybill_shipped_product': fields.one2many('tms.waybill.shipped_product', 'waybill_id', 'Shipped Products', readonly=False, states={'confirmed': [('readonly', True)]}),

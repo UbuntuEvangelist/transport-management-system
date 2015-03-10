@@ -27,7 +27,7 @@ import time
 from datetime import datetime, date
 import decimal_precision as dp
 import openerp
-
+from tools.translate import _
 
 class account_invoice(osv.osv):
     _inherit ='account.invoice'
@@ -100,6 +100,12 @@ class account_invoice(osv.osv):
                 self.write(cr, uid, ids, {'internal_number':False})
                 
         return super(account_invoice, self).unlink(cr, uid, ids, context=context)
+
+    def action_cancel_draft(self, cr, uid, ids, *args):
+        for invoice in self.browse(cr, uid, ids):
+            if invoice.waybill_ids:
+                raise osv.except_osv(_('Warning!'),_("You can not Set to Draft an Invoice created from Waybills!"))
+        return super(account_invoice, self).action_cancel_draft(cr, uid, ids, *args)
     
 #    def action_move_create(self, cr, uid, ids, context=None):
 #        res = super(account_invoice, self).action_move_create(cr, uid, ids, context=context)
