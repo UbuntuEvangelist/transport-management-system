@@ -328,11 +328,22 @@ class tms_expense(osv.osv):
         for record in self.browse(cr, uid, ids, context=context):
             if record.current_odometer <= record.last_odometer:
                 return False
-            return True
+        return True
+    
+    def _check_date(self, cr, uid, ids, context=None):         
+        for record in self.browse(cr, uid, ids, context=context):
+            # print "record.date: ", record.date
+            cr.execute("select date from tms_expense where id <> %s and employee_id = %s and state = 'confirmed' and date > '%s' order by date desc, date_confirmed desc limit 1;" % (record.id, record.employee_id.id, record.date))
+            data = filter(None, map(lambda x:x[0], cr.fetchall()))
+            # print "data: ", data
+            return not bool(len(data))
+        return True
+
 
     _constraints = [
         (_check_units_in_travels, 'You can not create a Travel Expense Record with several units.', ['travel_ids']),
         (_check_odometer, 'You can not have Current Reading <= Last Reading !', ['current_odometer']),
+        (_check_date, 'You can not have Travel Expense Record with date before last Travel Expense record related to this Driver !', ['date']),
     ]
 
     _order = 'name desc'
@@ -494,14 +505,14 @@ class tms_expense(osv.osv):
                 self.pool.get('tms.expense.loan').get_loan_discounts(cr, uid, expense.employee_id.id, expense.id)
                 
             #Revisamos si tiene un Balance en contra
-            cr.execute("select id from tms_expense where employee_id = %s and state = 'confirmed' order by date desc limit 1" % (expense.employee_id.id))
+            cr.execute("select id from tms_expense where employee_id = %s and state = 'confirmed' order by date desc, date_confirmed desc limit 1" % (expense.employee_id.id))
             data = filter(None, map(lambda x:x[0], cr.fetchall()))
             if len(data):
                 rec = self.browse(cr, uid, data)[0]
-                #print "=======\nLiquidación: ", rec.name
-                #print "Saldo: ", rec.amount_balance
+                ##print "=======\nLiquidación: ", rec.name
+                ##print "Saldo: ", rec.amount_balance
                 if rec.amount_balance < 0:
-                    #print "Si entra a intentar crear la linea de Saldo en contra arrastrado..."
+                    ##print "Si entra a intentar crear la linea de Saldo en contra arrastrado..."
                     red_balance_id = prod_obj.search(cr, uid, [('tms_category', '=', 'negative_balance'),('active','=', 1)], limit=1)
                     if not red_balance_id:
                         raise osv.except_osv(
@@ -1373,26 +1384,26 @@ class tms_expense_invoice(osv.osv_memory):
             if not res:
                 raise osv.except_osv('Error !',
                                     _('Move line was not found, please check your data...'))
-            print "invoice.id: ", invoice.id
-            print "invoice.number: ", invoice.number
-            print "invoice.supplier_invoice_number: ", invoice.supplier_invoice_number
-            print "invoice.amount_untaxed: ",  invoice.amount_untaxed
-            print "invoice.amount_tax: ", invoice.amount_tax
-            print "invoice.amount_total: ", invoice.amount_total
-            print "invoice.residual: ", invoice.residual     
-            print "invoice.partner_id: (%s) %s" % (invoice.partner_id.id, invoice.partner_id.name)
+            #print "invoice.id: ", invoice.id
+            #print "invoice.number: ", invoice.number
+            #print "invoice.supplier_invoice_number: ", invoice.supplier_invoice_number
+            #print "invoice.amount_untaxed: ",  invoice.amount_untaxed
+            #print "invoice.amount_tax: ", invoice.amount_tax
+            #print "invoice.amount_total: ", invoice.amount_total
+            #print "invoice.residual: ", invoice.residual     
+            #print "invoice.partner_id: (%s) %s" % (invoice.partner_id.id, invoice.partner_id.name)
             for move_line in invoice.move_id.line_id:
                 if move_line.account_id.type=='payable':
-                    print "move_line.account_id %s - %s" % (move_line.account_id.code, move_line.account_id.name)                    
+                    #print "move_line.account_id %s - %s" % (move_line.account_id.code, move_line.account_id.name)                    
                     lines = res + [move_line.id]
-                    for xline in move_line_obj.browse(cr, uid, lines):
-                        print "xline.account_id %s - %s" % (xline.account_id.code, xline.account_id.name)
-                        print "xline.debit: ", xline.debit
-                        print "xline.credit: ", xline.credit
-                        print "xline.partner_id: (%s) %s" % (xline.partner_id.id, xline.partner_id.name)
-                        print "xline.invoice.number: ", xline.invoice.number if xline.invoice else ''
-                        print "xline.invoice.supplier_invoice_number: ", xline.invoice.supplier_invoice_number if xline.invoice else ''
-                        print "xline.invoice.id: ", xline.invoice.id if xline.invoice else ''
+                    #for xline in move_line_obj.browse(cr, uid, lines):
+                        #print "xline.account_id %s - %s" % (xline.account_id.code, xline.account_id.name)
+                        #print "xline.debit: ", xline.debit
+                        #print "xline.credit: ", xline.credit
+                        #print "xline.partner_id: (%s) %s" % (xline.partner_id.id, xline.partner_id.name)
+                        #print "xline.invoice.number: ", xline.invoice.number if xline.invoice else ''
+                        #print "xline.invoice.supplier_invoice_number: ", xline.invoice.supplier_invoice_number if xline.invoice else ''
+                        #print "xline.invoice.id: ", xline.invoice.id if xline.invoice else ''
                         
                     res2 = move_line_obj.reconcile(cr, uid, lines, context=context)
         return
@@ -1439,7 +1450,7 @@ class tms_expense_invoice(osv.osv_memory):
             'sale_shop_id'          : line.expense_id.shop_id.id,
             })
         
-        print "Subtotal Factura: ", round(line.price_subtotal / line.product_uom_qty, 4)
+        #print "Subtotal Factura: ", round(line.price_subtotal / line.product_uom_qty, 4)
 
         notes = line.expense_id.name + ' - ' + line.product_id.name
 
