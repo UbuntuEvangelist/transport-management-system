@@ -86,17 +86,18 @@ class tms_fuelvoucher(osv.osv):
 
     
     _columns = {
-        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),        
+        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
         'name'          : fields.char('Fuel Voucher', size=64, required=False),
         'state'         : fields.selection([('draft','Draft'), ('approved','Approved'), ('confirmed','Confirmed'), ('closed','Closed'), ('cancel','Cancelled')], 'State', readonly=True),
         'date'          : fields.date('Date', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}, required=True),
         
         'employee1_id'  : fields.related('travel_id', 'employee_id', type='many2one', relation='hr.employee', string='Driver', store=True, readonly=True),
         'employee2_id'  : fields.related('travel_id', 'employee2_id', type='many2one', relation='hr.employee', string='Driver Helper', store=True, readonly=True),
-        'employee_id'   : fields.many2one('hr.employee', 'Driver', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]},required=True),
-        'shop_id'       : fields.related('travel_id', 'shop_id', type='many2one', relation='sale.shop', string='Shop', store=True, readonly=True),
-        'travel_id'     : fields.many2one('tms.travel', 'Travel', required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
-        'unit_id'       : fields.related('travel_id', 'unit_id', type='many2one', relation='fleet.vehicle', string='Unit', store=True, readonly=True),                
+        'employee_id'   : fields.many2one('hr.employee', 'Driver', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]},required=False),
+        #'shop_id'       : fields.related('travel_id', 'shop_id', type='many2one', relation='sale.shop', string='Shop', store=True, readonly=True),
+        'shop_id'       : fields.many2one('sale.shop', 'Shop', required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
+        'travel_id'     : fields.many2one('tms.travel', 'Travel', required=False, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
+        'unit_id'       : fields.many2one('fleet.vehicle', 'Vehicle', required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
         'partner_id'    : fields.many2one('res.partner', 'Fuel Supplier', domain=[('tms_category', '=', 'fuel')],  required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
         'product_id'    : fields.many2one('product.product', 'Product', domain=[('purchase_ok', '=', True),('tms_category','=','fuel')],  required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}, ondelete='restrict'),
         'product_uom_qty': fields.float('Quantity', digits=(16, 4), required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
@@ -129,6 +130,7 @@ class tms_fuelvoucher(osv.osv):
         'picking_id'    : fields.many2one('stock.picking.out', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
         'picking_id_cancel' : fields.many2one('stock.picking.in', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
         'driver_helper' : fields.boolean('For Driver Helper', help="Check this if you want to give this Fuel Voucher to Driver Helper.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
+        'no_travel'     : fields.boolean('No Travel', help="Check this if you want to create Fuel Voucher with no Travel.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
 
         }
     
@@ -151,7 +153,10 @@ class tms_fuelvoucher(osv.osv):
         prod_obj = self.pool.get('product.product')
         return {'value': {'product_uom' : prod_obj.browse(cr, uid, [product_id], context=None)[0].uom_id.id }}
 
+    def on_change_no_travel(self, cr, uid, ids, no_travel):
+        return no_travel and {'value': {'travel_id' : False, 'unit_id':False, 'employee_id':False}} or {}
 
+    
     def on_change_driver_helper(self, cr, uid, ids, driver_helper, employee1_id, employee2_id):
         return {'value': {'employee_id' : employee2_id,}} if driver_helper else {'value': {'employee_id' : employee1_id,}}
         
@@ -198,8 +203,15 @@ class tms_fuelvoucher(osv.osv):
         return {'value': {'price_unit': (subtotal / product_uom_qty), 'price_subtotal': subtotal, 'special_tax_amount': special_tax}}
                 
     def create(self, cr, uid, vals, context=None):
-        travel = self.pool.get('tms.travel').browse(cr, uid, vals['travel_id'])
-        shop_id = travel.shop_id.id
+        'travel_id' in vals and vals['travel_id'] and \
+        'no_travel' in vals and vals['no_travel'] and vals.pop('travel_id')
+        shop_id = 'shop_id' in vals and vals['shop_id'] or False
+        #print "vals: ", vals
+        if 'travel_id' in vals and vals['travel_id']:
+            travel = self.pool.get('tms.travel').browse(cr, uid, vals['travel_id'])
+            shop_id = travel.shop_id.id
+            vals.update({'shop_id': travel.shop_id.id, 'unit_id': travel.unit_id.id})
+        #print "shop_id: ", shop_id
         supplier_seq_id = self.pool.get('tms.sale.shop.fuel.supplier.seq').search(cr, uid, [('shop_id', '=', shop_id),('partner_id', '=', vals['partner_id'])])
         if supplier_seq_id:
             seq_id = self.pool.get('tms.sale.shop.fuel.supplier.seq').browse(cr, uid, supplier_seq_id)[0].fuel_sequence.id
@@ -215,6 +227,21 @@ class tms_fuelvoucher(osv.osv):
         return super(tms_fuelvoucher, self).create(cr, uid, vals, context=context)
 
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'no_travel' in vals:
+            raise osv.except_osv(
+                                 _('Warning !'), 
+                                 _('You can not change field < No Travel > once Fuel Voucher has been saved for the first time'))
+
+        for rec in self.browse(cr, uid, ids):
+            'shop_id' in vals and not rec.no_travel and vals.pop('shop_id')
+            'unit_id' in vals and not rec.no_travel and vals.pop('unit_id')
+            if 'travel_id' in vals:
+                travel = self.pool.get('tms.travel').browse(cr, uid, ids, vals['travel_id'])
+                vals.update({'shop_id': travel.shop_id.id, 'unit_id': travel.unit_id.id}) 
+        return super(tms_fuelvoucher, self).write(cr, uid, ids, vals, context=context)
+    
+    
     def action_cancel_draft(self, cr, uid, ids, *args):
         if not len(ids):
             return False
@@ -352,7 +379,11 @@ class tms_fuelvoucher(osv.osv):
                 
                 move_lines = []
                 precision = self.pool.get('decimal.precision').precision_get(cr, uid, 'Account')
-                notes = _("Fuel Voucher: %s\nTravel: %s\nDriver: (ID %s) %s\nVehicle: %s") % (fuelvoucher.name, fuelvoucher.travel_id.name, fuelvoucher.travel_id.employee_id.id, fuelvoucher.travel_id.employee_id.name, fuelvoucher.travel_id.unit_id.name)
+                notes = _("Fuel Voucher: %s\nTravel: %s\nDriver: (ID %s) %s\nVehicle: %s") % \
+                        (fuelvoucher.name, fuelvoucher.travel_id and fuelvoucher.travel_id.name or 'N/A', 
+                         fuelvoucher.travel_id and fuelvoucher.travel_id.employee_id.id or 0, 
+                         fuelvoucher.travel_id.employee_id and fuelvoucher.travel_id.employee_id.name or 'N/A', 
+                         fuelvoucher.travel_id and fuelvoucher.travel_id.unit_id and fuelvoucher.travel_id.unit_id.name or fuelvoucher.unit_id.name)
                 ##print "notes: ", notes
                 
                 
@@ -368,7 +399,7 @@ class tms_fuelvoucher(osv.osv):
                                     'journal_id'    : journal_id,
                                     'period_id'     : period_id[0],
                                     'vehicle_id'    : fuelvoucher.unit_id.id,
-                                    'employee_id'   : fuelvoucher.employee_id.id,
+                                    'employee_id'   : fuelvoucher.employee_id and fuelvoucher.employee_id.id or False,
                                     'sale_shop_id'  : fuelvoucher.shop_id.id,
                                     'product_id'    : fuelvoucher.product_id.id,
                                     'product_uom_id': fuelvoucher.product_id.uom_id.id,
@@ -388,7 +419,7 @@ class tms_fuelvoucher(osv.osv):
                                     'journal_id'    : journal_id,
                                     'period_id'     : period_id[0],
                                     'vehicle_id'    : fuelvoucher.unit_id.id,
-                                    'employee_id'   : fuelvoucher.employee_id.id,
+                                    'employee_id'   : fuelvoucher.employee_id and fuelvoucher.employee_id.id or False,
                                     'sale_shop_id'  : fuelvoucher.shop_id.id,
                                     'product_id'    : fuelvoucher.product_id.id,
                                     'product_uom_id': fuelvoucher.product_id.uom_id.id,
@@ -507,7 +538,7 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
                     a = account_fiscal_obj.map_account(cr, uid, False, a)
                     #print "line.price_unit: ", line.price_unit
                     inv_line = (0,0, {
-                        'name': line.product_id.name + ' - ' + line.travel_id.name + ' - ' + line.name,
+                        'name': line.product_id.name + ' - ' + (line.travel_id and line.travel_id.name or ' ') + ' - ' + line.name,
                         'origin': line.name,
                         'account_id': a,
                         'price_unit': line.price_unit,
@@ -518,10 +549,10 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
                         'note': line.notes,
                         'account_analytic_id': False,
                         'vehicle_id'    : line.unit_id.id,
-                        'employee_id'   : line.employee_id.id,
+                        'employee_id'   : line.employee_id and line.employee_id.id or False,
                         'sale_shop_id'  : line.shop_id.id,
                         })
-                    print "inv_line: ", inv_line
+                    #print "inv_line: ", inv_line
                     inv_lines.append(inv_line)
                 
                     notes += '\n' + line.name

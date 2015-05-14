@@ -25,6 +25,8 @@ TMS.FUELVOUCHER
                    <filter string="Not Cancelled" icon="terp-stock_symbol-selection" domain="[('state','!=','cancel')]"/>
                    <filter string="Invoiced" icon="terp-stock_symbol-selection" domain="[('invoice_id','!=', False)]"/>
                    <filter string="Not Invoiced" icon="terp-dialog-close" domain="[('invoice_id','=', False)]"/>
+                   <filter string="Without Travel" icon="terp-dialog-close" domain="[('no_travel','=', 1)]"/>
+                    
                    <newline/>
                    <field name="name"/>
                    <field name="travel_id" />
@@ -81,6 +83,7 @@ TMS.FUELVOUCHER
                 <field name="shop_id" invisible="1"/>
                 <field name="operation_id" invisible="1"/>
                 <field name="state" />
+                <field name="no_travel" invisible="1"/>
                 <button name="action_approve" states="draft" string="Approve" type="object" icon="gtk-go-forward" groups="tms.group_fuelvoucher_approve"/>
                 <button name="action_confirm" states="approved" string="Confirm" type="object" icon="gtk-goto-last" groups="tms.group_fuelvoucher_confirm"/>
 		    </tree>
@@ -109,13 +112,20 @@ TMS.FUELVOUCHER
                         <group colspan="4" col="4">
                             <field name="employee1_id" invisible="1"/>
                             <field name="employee2_id" invisible="1"/>
-                            <field name="shop_id" />
+                            <field name="shop_id" attrs="{'required':[('no_travel','=',True)],'readonly':[('no_travel','=',False)]}" />
                             <field name="date" />
-                            <field name="travel_id" domain="[('state','!=','cancel'),('state','!=','closed'), ('supplier_unit', '=', False)]" on_change="on_change_travel_id(travel_id)"/>
-                            <field name="operation_id" domain="[('state','=','process')]" />
-                            <field name="unit_id" readonly="1"/>
-                            <field name="employee_id" domain="[('id','in',(employee1_id, employee2_id))]"
-                                        on_change="on_change_driver(employee_id,employee1_id, employee2_id)"  />
+                            <field name="no_travel" on_change="on_change_no_travel(no_travel)"/>
+                            <newline />
+                            <field name="travel_id" attrs="{'required':[('no_travel','=',False)],'invisible':[('no_travel','=',True)]}"
+                                   domain="[('state','!=','cancel'),('state','!=','closed'), ('supplier_unit', '=', False)]" 
+                                   on_change="on_change_travel_id(travel_id)"/>
+                            <field name="operation_id" domain="[('state','=','process')]" attrs="{'invisible':[('no_travel','=',True)]}"/>
+                            <field name="unit_id" attrs="{'readonly':[('no_travel','=',False)]}"
+                                   domain="[('fleet_type','in',('tractor','other'))]"/>
+                            <field name="employee_id"
+                                   domain="[('id','in',(employee1_id, employee2_id))]"
+                                   attrs="{'required':[('no_travel','=',False)],'readonly':[('no_travel','=',True)],'invisible':[('no_travel','=',True)]}" 
+                                   on_change="on_change_driver(employee_id,employee1_id, employee2_id)"  />
                             <separator string=" " colspan="2"/>
                             <field name="driver_helper" on_change="on_change_driver_helper(driver_helper, employee1_id, employee2_id)" 
                                    attrs="{'invisible':['|', ('employee2_id','=',False),('travel_id', '=', False)]}" />
