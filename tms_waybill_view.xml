@@ -559,7 +559,7 @@ TMS.waybill.category
             <filter string='Shop' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'shop_id'}" />	    
             <filter string='Supplier' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'supplier_id'}" />	    
             <filter string='Operation' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'operation_id'}" />
-            <filter string='Period' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'date'}" />
+            <filter string='Period' icon="terp-stock_symbol-selection" domain="[]" context="{'group_by' : 'date_order'}" />
 
           </group>
         </search>

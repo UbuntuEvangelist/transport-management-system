@@ -145,6 +145,19 @@ class tms_fuelvoucher(osv.osv):
         ]
     _order = "name desc, date desc"
 
+    
+    def _check_driver(self, cr, uid, ids, context=None):         
+        for record in self.browse(cr, uid, ids, context=context):            
+            if not record.no_travel and record.driver_helper and not record.travel_id.employee2_id.id==record.employee_id.id:
+                return False
+            elif not record.no_travel and not record.travel_id.employee_id.id==record.employee_id.id:
+                return False
+            return True
+
+    _constraints = [
+        (_check_driver, 'You can not create Fuel Voucher with Driver not in Travel Record.', ['employee_id']),
+    ]
+    
 
     def on_change_product_id(self, cr, uid, ids, product_id):
         res = {}
@@ -218,7 +231,7 @@ class tms_fuelvoucher(osv.osv):
         else:
             raise osv.except_osv(
                                  _('Fuel Voucher Sequence Error !'), 
-                                 _('You have not defined Fuel Voucher Sequence for shop ') + travel.shop_id.name + _(' and Supplier ') + str(vals['partner_id']))
+                                 _('You have not defined Fuel Voucher Sequence for this shop and Supplier ') + str(vals['partner_id']))
         if seq_id:
             seq_number = self.pool.get('ir.sequence').get_id(cr, uid, seq_id)
             vals['name'] = seq_number
@@ -265,7 +278,7 @@ class tms_fuelvoucher(osv.osv):
                 raise osv.except_osv(
                         _('Could not cancel Fuel Voucher !'),
                         _('This Fuel Voucher is already Invoiced'))
-            elif fuelvoucher.travel_id.state in ('closed'):
+            elif fuelvoucher.travel_id and fuelvoucher.travel_id.state in ('closed'):
                 raise osv.except_osv(
                         _('Could not cancel Fuel Voucher !'),
                         _('This Fuel Voucher is already linked to Travel Expenses record'))

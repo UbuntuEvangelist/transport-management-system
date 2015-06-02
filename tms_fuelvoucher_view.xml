@@ -123,8 +123,7 @@ TMS.FUELVOUCHER
                             <field name="unit_id" attrs="{'readonly':[('no_travel','=',False)]}"
                                    domain="[('fleet_type','in',('tractor','other'))]"/>
                             <field name="employee_id"
-                                   domain="[('id','in',(employee1_id, employee2_id))]"
-                                   attrs="{'required':[('no_travel','=',False)],'readonly':[('no_travel','=',True)],'invisible':[('no_travel','=',True)]}" 
+                                   attrs="{'required':True}" 
                                    on_change="on_change_driver(employee_id,employee1_id, employee2_id)"  />
                             <separator string=" " colspan="2"/>
                             <field name="driver_helper" on_change="on_change_driver_helper(driver_helper, employee1_id, employee2_id)" 
