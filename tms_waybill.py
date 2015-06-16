@@ -102,7 +102,7 @@ class tms_waybill_taxes(osv.osv):
                         'tax_id'   : t['tax_id'],
                         'account_id': t['account_id'],
                         'account_analytic_id': t['account_analytic_id'],
-                        'tax_amount': t['tax_amount'],
+                        'tax_amount': t['amount'],
                         'base'      : t['base'],
                         }
                 res = wb_taxes_obj.create(cr, uid, vals)
@@ -621,6 +621,9 @@ class tms_waybill(osv.osv):
                         'date_confirmed': False,
                         'drafted_by'    : False,
                         'date_drafted'  : False,
+                        'replaced_waybill_id': False,
+                        'move_id': False,
+                        'user_id': uid,
 						})
 
         return super(tms_waybill, self).copy(cr, uid, id, default, context)
@@ -660,8 +663,9 @@ class tms_waybill(osv.osv):
         move_obj = self.pool.get('account.move')
         period_obj = self.pool.get('account.period')
         account_jrnl_obj=self.pool.get('account.journal')
-
+        cur_obj = self.pool.get('res.currency')        
         for waybill in self.browse(cr, uid, ids, context=None):
+            company_currency = self.pool['res.company'].browse(cr, uid, waybill.company_id.id).currency_id.id
             if waybill.amount_untaxed <= 0.0:
                 raise osv.except_osv(_('Could not confirm Waybill !'),_('Total Amount must be greater than zero.'))
             elif not waybill.travel_id.id:
@@ -702,31 +706,35 @@ class tms_waybill(osv.osv):
                 if not (tms_prod_income_account & prod_income_account):
                     raise osv.except_osv('Error !',
                                  _('You have not defined Income Account for product %s') % (waybill_line.product_id.name))
-                
+                xsubtotal = cur_obj.compute(cr, uid, waybill.currency_id.id, company_currency, waybill_line.price_subtotal, context={'date': waybill.date_order})
                 move_line = (0,0, {
                                 'name'          : _('Waybill: %s - Product: %s') % (waybill.name, waybill_line.name),
                                 'account_id'    : tms_prod_income_account,
                                 'debit'         : 0.0,
-                                'credit'        : round(waybill_line.price_subtotal, precision),
+                                'credit'        : round(xsubtotal, precision),
                                 'journal_id'    : journal_id,
                                 'period_id'     : period_id[0],
                                 'product_id'    : waybill_line.product_id.id,
                                 'sale_shop_id'  : waybill.travel_id.shop_id.id,
                                 'vehicle_id'    : waybill.travel_id.unit_id.id,
                                 'employee_id'   : waybill.travel_id.employee_id.id,
+                                'currency_id'   : waybill.currency_id.id != company_currency and waybill.currency_id.id or False,
+                                'amount_currency': waybill.currency_id.id != company_currency and (waybill_line.price_subtotal * -1.0) or False,
                                 })
                 move_lines.append(move_line)
             
                 move_line = (0,0, {
                                 'name'          : _('Waybill: %s - Product: %s') % (waybill.name, waybill_line.name),
                                 'account_id'    : prod_income_account,
-                                'debit'         : round(waybill_line.price_subtotal, precision),
+                                'debit'         : round(xsubtotal, precision),
                                 'credit'        : 0.0,
                                 'journal_id'    : journal_id,
                                 'period_id'     : period_id[0],
                                 'sale_shop_id'  : waybill.travel_id.shop_id.id,
                                 'vehicle_id'    : waybill.travel_id.unit_id.id,
                                 'employee_id'   : waybill.travel_id.employee_id.id,
+                                'currency_id'   : waybill.currency_id.id != company_currency and waybill.currency_id.id or False,
+                                'amount_currency': waybill.currency_id.id != company_currency and waybill_line.price_subtotal or False,                        
                                 })
                 move_lines.append(move_line)
 
@@ -1133,7 +1141,7 @@ class tms_waybill_cancel(osv.osv_memory):
           
                     if record.copy_waybill:                        
                         default ={} 
-                        default.update({'replaced_waybill_id': waybill.id })
+                        default.update({'replaced_waybill_id': waybill.id,'move_id':False })
                         if record.sequence_id.id:
                             default.update({'sequence_id': record.sequence_id.id })
                         if record.date_order:

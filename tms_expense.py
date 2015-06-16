@@ -1318,7 +1318,7 @@ class tms_expense_invoice(osv.osv_memory):
                         move_line = (0,0, {
                                     'name'          : _('Negative Balance'),
                                     'ref'           : expense.name,
-                                    'account_id'    : advance_account,
+                                    'account_id'    : negative_balance_account,
                                     'debit'         : round(expense.amount_balance * -1.0, precision),
                                     'credit'        : 0.0,
                                     'journal_id'    : journal_id,

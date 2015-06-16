@@ -280,6 +280,8 @@ class tms_advance(osv.osv):
             'date_drafted': False,
             'move_id': False,
             'notes': False,
+            'expense_id':False,
+            'expense2_id':False,
         })
         return super(tms_advance, self).copy(cr, uid, id, default, context)
 

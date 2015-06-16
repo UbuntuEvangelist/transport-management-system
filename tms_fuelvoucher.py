@@ -44,14 +44,10 @@ class tms_fuelvoucher(osv.osv):
         res = {}
         invoiced = paid = name = False
         for record in self.browse(cr, uid, ids, context=context):
-            if (record.invoice_id.id):                
-                invoiced = True
-                paid = (record.invoice_id.state == 'paid')
-                name = record.invoice_id.supplier_invoice_number
-            res[record.id] =  { 'invoiced': invoiced,
-                                'invoice_paid': paid,
-                                'invoice_name': name 
-                                }
+            res[record.id] =  { 'invoiced': bool(record.invoice_id and record.invoice_id.state !='cancel'),
+                                'invoice_paid': bool(record.invoice_id and record.invoice_id.state =='paid'),
+                                'invoice_name': (record.invoice_id and record.invoice_id.state !='cancel') and (record.invoice_id.supplier_invoice_number or record.invoice_id.name) or False,
+                                }            
         return res
 
     def _amount_calculation(self, cr, uid, ids, field_name, args, context=None):
@@ -73,10 +69,6 @@ class tms_fuelvoucher(osv.osv):
                 special_tax_amount = (record.price_total - subtotal - record.tax_amount) if tax_factor else 0.0
                 price_unit = subtotal / (record.product_uom_qty or 1.0)
                 price_total = record.price_total
-            ##print "subtotal: ", subtotal
-            ##print "IEPS: ", special_tax_amount
-            ##print "Impuestos: ", record.tax_amount
-            ##print "price_unit: ", price_unit 
             res[record.id] =   {'price_subtotal': subtotal,
                                 'special_tax_amount': special_tax_amount,
                                 'price_unit': price_unit,
@@ -84,6 +76,12 @@ class tms_fuelvoucher(osv.osv):
                                 }
         return res
 
+    def _get_supplier_invoice(self, cr, uid, ids, context=None):
+        result = {}
+        for invoice in self.pool.get('account.invoice').browse(cr, uid, ids, context=context):
+            for fuelvoucher in invoice.fuelvoucher_ids:
+                result[fuelvoucher.id] = True        
+        return result.keys()    
     
     _columns = {
         'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
@@ -122,9 +120,21 @@ class tms_fuelvoucher(osv.osv):
         'drafted_by'    : fields.many2one('res.users', 'Drafted by', readonly=True),
         'date_drafted'  : fields.datetime('Date Drafted', readonly=True),
         'invoice_id'    : fields.many2one('account.invoice','Invoice Record', readonly=True, domain=[('state', '!=', 'cancel')],),
-        'invoiced'      : fields.function(_invoiced, method=True, string='Invoiced', type='boolean', multi='invoiced'),               
-        'invoice_paid'  : fields.function(_invoiced, method=True, string='Paid', type='boolean', multi='invoiced'),
-        'invoice_name'  : fields.function(_invoiced, method=True, string='Invoice', type='char', size=64, multi='invoiced', store=True),
+        'invoiced'      : fields.function(_invoiced, method=True, string='Invoiced', type='boolean', multi='invoiced',
+                                            store={'tms.fuelvoucher': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                   'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                  }
+                                        ),
+        'invoice_paid'  : fields.function(_invoiced, method=True, string='Paid', type='boolean', multi='invoiced',
+                                            store={'tms.fuelvoucher': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                   'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                  }
+                                        ),
+        'invoice_name'  : fields.function(_invoiced, method=True, string='Invoice', type='char', size=64, multi='invoiced', 
+                                            store={'tms.fuelvoucher': (lambda self, cr, uid, ids, c={}: ids, None, 10),
+                                                   'account.invoice': (_get_supplier_invoice, ['state'], 20)
+                                                  }
+                                        ),
         'currency_id'   : fields.many2one('res.currency', 'Currency', required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
         'move_id'       : fields.many2one('account.move', 'Account Move', required=False, readonly=True, ondelete='restrict'),
         'picking_id'    : fields.many2one('stock.picking.out', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
@@ -472,6 +482,9 @@ class tms_fuelvoucher(osv.osv):
             'date_drafted': False,
             'invoice_id': False,
             'notes': False,
+            'move_id': False,
+            'expense_id':False,
+            'expense2_id':False,
         })
         return super(tms_fuelvoucher, self).copy(cr, uid, id, default, context)
 
@@ -516,7 +529,7 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
             journal_id = account_jrnl_obj.search(cr, uid, [('type', '=', 'purchase'),('tms_expense_suppliers_journal', '=', 1)], context=None)
             journal_id = journal_id and journal_id[0] or False
 
-            cr.execute("select distinct partner_id, currency_id from tms_fuelvoucher where invoice_id is null and state in ('confirmed', 'closed') and id IN %s",(tuple(record_ids),))
+            cr.execute("select distinct partner_id, currency_id from tms_fuelvoucher where (invoice_id is null or invoice_id=(select ai.id from account_invoice ai where ai.id=invoice_id and state = 'cancel')) and state in ('confirmed', 'closed') and id IN %s",(tuple(record_ids),))
 
             data_ids = cr.fetchall()
             if not len(data_ids):
@@ -527,7 +540,7 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
             for data in data_ids:
                 partner = partner_obj.browse(cr,uid,data[0])
 
-                cr.execute("select id from tms_fuelvoucher where invoice_id is null and state in ('confirmed', 'closed') and partner_id=" + str(data[0]) + ' and currency_id=' + str(data[1]) + " and id IN %s", (tuple(record_ids),))
+                cr.execute("select id from tms_fuelvoucher where (invoice_id is null or invoice_id=(select ai.id from account_invoice ai where ai.id=invoice_id and state = 'cancel')) and state in ('confirmed', 'closed') and partner_id=" + str(data[0]) + ' and currency_id=' + str(data[1]) + " and id IN %s", (tuple(record_ids),))
                 fuelvoucher_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
                 
                 inv_lines = []
