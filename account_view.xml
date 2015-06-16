@@ -38,6 +38,23 @@
             </field>
         </record>
     
+        <record id="view_invoice_supplier_form_inherit_tms" model="ir.ui.view">
+            <field name="name">account.invoice.form.tms.supplier</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="arch" type="xml">
+	           <notebook position="inside">
+                  <page string="Fuel Vouchers" attrs="{'invisible':[('fuelvoucher_ids','=',False)]  }">
+                    <group colspan="4" col="4">
+                        <separator string="Fuel Vouchers" colspan="4" />
+                        <field name="fuelvoucher_ids" nolabel="1" colspan="4" />
+                    </group>
+                   </page>
+	           </notebook>
+            </field>
+        </record>
+
     
         <record id="view_invoice_form_inherit_tms" model="ir.ui.view">
             <field name="name">account.invoice.form.tms</field>
