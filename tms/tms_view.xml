@@ -103,7 +103,6 @@ TMS.UNIT.CATEGORY
 	<record model="ir.ui.view" id="view_tms_unit_category_search">
         <field name="name">tms.unit.category.search</field>
         <field name="model">tms.unit.category</field>
-		<field name="type">search</field>
 		<field name="arch" type="xml">
             <search string="Unit Master Data">
                 <filter string="View"        icon="terp-accessories-archiver" domain="[('type','=','view')]"/>
@@ -126,7 +125,6 @@ TMS.UNIT.CATEGORY
 	<record model="ir.ui.view" id="view_tms_unit_category_tree">
         <field name="name">tms.unit.category.tree</field>
         <field name="model">tms.unit.category</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Unit Master Data" colors="green:type in ('unit_type');blue:type in ('brand');black:type in ('model');red:type in ('extra_data');">
                 <field name="company_id" />
@@ -143,7 +141,6 @@ TMS.UNIT.CATEGORY
         <record id="view_tms_unit_category_form" model="ir.ui.view">
             <field name="name">tms.unit.category.form</field>
             <field name="model">tms.unit.category</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Unit Categories" version="7.0">
                     <sheet>
@@ -197,7 +194,6 @@ FLEET.VEHICLE - (former TMS.UNIT)
         <record model="ir.ui.view" id="fleet_vehicle_search_inherit_tms">
             <field name="name">fleet.vehicle.tms.search</field>
             <field name="model">fleet.vehicle</field>
-            <field name="type">search</field>
             <field name="inherit_id" ref="fleet.fleet_vehicle_search"/>
             <field name="arch" type="xml">
                 <filter name="alert_true" position="before">
@@ -223,7 +219,6 @@ FLEET.VEHICLE - (former TMS.UNIT)
         <record id="fleet_vehicle_form_inherit_tms" model="ir.ui.view">
             <field name="name">fleet.vehicle.tms.form</field>
             <field name="model">fleet.vehicle</field>
-            <field name="type">form</field>
             <field name="inherit_id" ref="fleet.fleet_vehicle_form"/>
             <field name="arch" type="xml">
                 <div class="oe_title" position="replace">
@@ -377,7 +372,6 @@ FLEET.VEHICLE - (former TMS.UNIT)
         <record id="fleet_vehicle_tree_inherit_tms" model="ir.ui.view">
             <field name="name">fleet.vehicle.tms.tree</field>
             <field name="model">fleet.vehicle</field>
-            <field name="type">tree</field>
             <field name="inherit_id" ref="fleet.fleet_vehicle_tree"/>
             <field name="arch" type="xml">
                 <field name="model_id" position="replace"></field>
@@ -421,7 +415,6 @@ TMS.UNIT.KIT
         <record id="view_tms_unit_kit_search" model="ir.ui.view">
             <field name="name">tms.unit.kit.search</field>
             <field name="model">tms.unit.kit</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Units Kits">
                    <field name="name"/>
@@ -449,7 +442,6 @@ TMS.UNIT.KIT
 	<record model="ir.ui.view" id="view_tms_unit_kit_tree">
         <field name="name">tms.unit.kit.tree</field>
         <field name="model">tms.unit.kit</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Units Kits">
 			<field name="name"/>			
@@ -474,7 +466,6 @@ TMS.UNIT.KIT
         <record id="view_tms_unit_kit_form" model="ir.ui.view">
             <field name="name">tms.unit.kit.form</field>
             <field name="model">tms.unit.kit</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Units Kits" version="7.0">
                     <sheet>
@@ -533,7 +524,6 @@ TMS.PLACE
 	<record model="ir.ui.view" id="view_tms_place_tree">
         <field name="name">tms.place.tree</field>
         <field name="model">tms.place</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Places">
                 <field name="complete_name" />
@@ -551,7 +541,6 @@ TMS.PLACE
         <record id="view_tms_place_form" model="ir.ui.view">
             <field name="name">tms.place.form</field>
             <field name="model">tms.place</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Places" version="7.0">
                     <header>
@@ -594,7 +583,6 @@ TMS.ROUTE
         <record id="view_tms_route_search" model="ir.ui.view">
           <field name="name">tms.route.search</field>
           <field name="model">tms.route</field>
-          <field name="type">search</field>
           <field name="arch" type="xml">
             <search string="Routes">
               <field name="name"/>
@@ -623,7 +611,6 @@ TMS.ROUTE
 	<record model="ir.ui.view" id="view_tms_route_tree">
           <field name="name">tms.route.tree</field>
           <field name="model">tms.route</field>
-	  <field name="type">tree</field>
 	  <field name="arch" type="xml">
             <tree string="Routes">
               <field name="name" />
@@ -640,7 +627,6 @@ TMS.ROUTE
         <record id="view_tms_route_form" model="ir.ui.view">
           <field name="name">tms.route.form</field>
           <field name="model">tms.route</field>
-          <field name="type">form</field>
           <field name="arch" type="xml">
             <form string="Routes" version="7.0">
               <header>
@@ -734,7 +720,6 @@ TMS.ROUTE.TOLLSTATION
 	<record model="ir.ui.view" id="view_tms_route_tollstation_tree">
           <field name="name">tms.route.tollstation.tree</field>
           <field name="model">tms.route.tollstation</field>
-	  <field name="type">tree</field>
 	  <field name="arch" type="xml">
             <tree string="Toll Stations">
               <field name="name" />
@@ -751,7 +736,6 @@ TMS.ROUTE.TOLLSTATION
         <record id="view_tms_route_tollstation_form" model="ir.ui.view">
           <field name="name">tms.route.tollstation.form</field>
           <field name="model">tms.route.tollstation</field>
-          <field name="type">form</field>
           <field name="arch" type="xml">
             <form string="Toll Stations">
               <field name="name" select="1"/>
@@ -811,7 +795,6 @@ TMS.UNIT.ACTIVE_HISTORY
         <record id="view_tms_unit_active_history_search" model="ir.ui.view">
             <field name="name">tms.unit.active_history.search</field>
             <field name="model">tms.unit.active_history</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Unit Active/Inactive History">
                    <filter string="Motorized Units" icon="terp-accessories-archiver" domain="[('unit_id.fleet_type','=','tractor')]"/>
@@ -849,7 +832,6 @@ TMS.UNIT.ACTIVE_HISTORY
 	<record model="ir.ui.view" id="view_tms_unit_active_history_tree">
         <field name="name">tms.unit.active_history.tree</field>
         <field name="model">tms.unit.active_history</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Units Active/Inactive History" colors="gray:state=='cancel';red:state=='draft';">
                 <field name="state"/>
@@ -871,7 +853,6 @@ TMS.UNIT.ACTIVE_HISTORY
         <record id="view_tms_unit_active_history_form" model="ir.ui.view">
             <field name="name">tms.unit.active_history.form</field>
             <field name="model">tms.unit.active_history</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Units Active/Inactive History" version="7.0">
                     <header>
@@ -942,7 +923,6 @@ TMS.UNIT.red_tape
         <record id="view_tms_unit_red_tape_search" model="ir.ui.view">
             <field name="name">tms.unit.red_tape.search</field>
             <field name="model">tms.unit.red_tape</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Unit Red Tapes">
                    <filter string="Motorized Units" icon="terp-accessories-archiver" domain="[('unit_id.fleet_type','=','tractor')]"/>
@@ -972,7 +952,6 @@ TMS.UNIT.red_tape
 	<record model="ir.ui.view" id="view_tms_unit_red_tape_tree">
           <field name="name">tms.unit.red_tape.tree</field>
           <field name="model">tms.unit.red_tape</field>
-	  <field name="type">tree</field>
 	  <field name="arch" type="xml">
             <tree string="Unit Red Tapes" colors="gray:state=='cancel';red:state=='draft';">
               <field name="state"/>
@@ -992,7 +971,6 @@ TMS.UNIT.red_tape
         <record id="view_tms_unit_red_tape_form" model="ir.ui.view">
             <field name="name">tms.unit.red_tape.form</field>
             <field name="model">tms.unit.red_tape</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Units Red Tapes" version="7.0">
                     <header>
@@ -1080,7 +1058,6 @@ fleet.vehicle.odometer.device
         <record id="view_fleet_vehicle_odometer_device_search" model="ir.ui.view">
             <field name="name">fleet.vehicle.odometer.device.search</field>
             <field name="model">fleet.vehicle.odometer.device</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Vehicle Odometer Device">
                    <field name="vehicle_id" />
@@ -1103,7 +1080,6 @@ fleet.vehicle.odometer.device
 	<record model="ir.ui.view" id="view_fleet_vehicle_odometer_device_tree">
         <field name="name">fleet.vehicle.odometer.device.tree</field>
         <field name="model">fleet.vehicle.odometer.device</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
 		    <tree string="Vehicle Odometer Device" colors="gray:state=='cancel';red:state=='draft';gray:state=='inactive';blue:state=='active';">
 		        <field name="state"/>
@@ -1125,7 +1101,6 @@ fleet.vehicle.odometer.device
         <record id="view_fleet_vehicle_odometer_device_form" model="ir.ui.view">
             <field name="name">fleet.vehicle.odometer.device.form</field>
             <field name="model">fleet.vehicle.odometer.device</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Vehicle Odometer Device" version="7.0">
                     <header>
@@ -1191,7 +1166,6 @@ FLEET.VEHICLE.ODOMETER
         <record id="fleet_vehicle_odometer_inherit_tms" model="ir.ui.view">
             <field name="name">fleet.vehicle.odometer.tree.tms</field>
             <field name="model">fleet.vehicle.odometer</field>
-            <field name="type">tree</field>
             <field name="inherit_id" ref="fleet.fleet_vehicle_odometer_tree"/>
             <field name="arch" type="xml">
                 <field name="vehicle_id" position="after">

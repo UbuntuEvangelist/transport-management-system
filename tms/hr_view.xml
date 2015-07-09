@@ -8,7 +8,6 @@
         <record model="ir.ui.view" id="view_employee_form_tms">
             <field name="name">Employee - TMS</field>
             <field name="model">hr.employee</field>
-            <field name="type">form</field>
             <field name="priority">50</field>
             <field name="inherit_id" ref="hr.view_employee_form"/>
             <field name="arch" type="xml">
@@ -52,7 +51,6 @@
         <record model="ir.ui.view" id="view_hr_job_form_tms">
             <field name="name">Jobs - TMS</field>
             <field name="model">hr.job</field>
-            <field name="type">form</field>
             <field name="priority">50</field>
             <field name="inherit_id" ref="hr.view_hr_job_form"/>
             <field name="arch" type="xml">

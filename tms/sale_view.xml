@@ -6,7 +6,6 @@
     <record model="ir.ui.view" id="tms_view_shop_form">
         <field name="name">TMS sale.shop.form</field>
         <field name="model">sale.shop</field>
-        <field name="type">form</field>
         <field name="priority">50</field>
         <field name="inherit_id" ref="sale.view_shop_form"/>
         <field name="arch" type="xml">

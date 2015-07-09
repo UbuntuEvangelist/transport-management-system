@@ -10,7 +10,6 @@ tms.expense.loan
         <record id="view_tms_expense_loan_tree" model="ir.ui.view">
             <field name="name">tms.expense.loan.tree</field>
             <field name="model">tms.expense.loan</field>
-            <field name="type">tree</field>
             <field name="priority">2</field>
             <field name="arch" type="xml">
                 <tree string="Drivers Loans" colors="red:state=='draft';gray:state=='cancel';green:state=='approve';blue:state=='confirm';">
@@ -36,7 +35,6 @@ tms.expense.loan
         <record id="view_tms_expense_loan_form" model="ir.ui.view">
             <field name="name">tms.expense.loan.form</field>
             <field name="model">tms.expense.loan</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Drivers Loans" version="7.0">
                 <header>
@@ -128,7 +126,6 @@ tms.expense.loan
         <record id="view_tms_expense_loan_filter" model="ir.ui.view">
             <field name="name">tms.expense.loan.filter</field>
             <field name="model">tms.expense.loan</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Loans">
                     <filter icon="terp-gtk-media-pause" string="Draft" domain="[('state','=','draft')]"/>
@@ -157,7 +154,6 @@ tms.expense.loan
         <record model="ir.ui.view" id="view_tms_expense_loan_graph">
             <field name="name">tms.expense.loan.graph</field>
             <field name="model">tms.expense.loan</field>
-            <field name="type">graph</field>
             <field name="arch" type="xml">
                 <graph string="Expense" type="bar">
                     <field name="product_id"/>

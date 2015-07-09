@@ -11,7 +11,6 @@ TMS.WAYBILL.EXTRADATA
 	<record model="ir.ui.view" id="view_tms_waybill_extradata_tree">
         <field name="name">tms.waybill.extradata.tree</field>
         <field name="model">tms.waybill.extradata</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="TMS Waybill Extra Fields">
                 <field name="name" select="1"/>
@@ -26,7 +25,6 @@ TMS.WAYBILL.EXTRADATA
         <record id="view_tms_waybill_extradata_form" model="ir.ui.view">
             <field name="name">tms.waybill.extradata.form</field>
             <field name="model">tms.waybill.extradata</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="TMS Waybill Extra Fields">
 		            <field name="name" />
@@ -57,7 +55,6 @@ TMS.waybill.category
         <record id="view_tms_waybill_category_search" model="ir.ui.view">
             <field name="name">tms.waybill.category.search</field>
             <field name="model">tms.waybill.category</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Waybill Categories">
                    <field name="name"/>
@@ -72,7 +69,6 @@ TMS.waybill.category
 	<record model="ir.ui.view" id="view_tms_waybill_category_tree">
         <field name="name">tms.waybill.category.tree</field>
         <field name="model">tms.waybill.category</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Waybill Categories">
                 <field name="name" />
@@ -87,7 +83,6 @@ TMS.waybill.category
         <record id="view_tms_waybill_category_form" model="ir.ui.view">
             <field name="name">tms.waybill.category.form</field>
             <field name="model">tms.waybill.category</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Waybill Categories" version="7.0">
                     <sheet>
@@ -142,7 +137,6 @@ TMS.waybill.category
         <record id="view_waybill_cancel" model="ir.ui.view">
           <field name="name">Create copy from Waybill on Cancell</field>
           <field name="model">tms.waybill.cancel</field>
-          <field name="type">form</field>
           <field name="arch" type="xml">
 	        <form string="Create a copy" version="7.0">
                 <separator colspan="4" string="Cancel this Waybill ?" />
@@ -183,7 +177,6 @@ TMS.waybill.category
         <record id="view_tms_waybill_tree" model="ir.ui.view">
           <field name="name">tms.waybill.tree</field>
           <field name="model">tms.waybill</field>
-          <field name="type">tree</field>
           <field name="priority">2</field>
           <field name="arch" type="xml">
             <tree string="Waybills" colors="gray:state=='cancel';red:state=='draft';green:state=='approved';">
@@ -217,7 +210,6 @@ TMS.waybill.category
         <record id="view_tms_waybill_form" model="ir.ui.view">
             <field name="name">tms.waybill.form</field>
             <field name="model">tms.waybill</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Waybill" version="7.0">
                 <header>
@@ -513,7 +505,6 @@ TMS.waybill.category
     <record id="view_tms_waybill_filter" model="ir.ui.view">
       <field name="name">tms.waybill.list.select</field>
       <field name="model">tms.waybill</field>
-      <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="Search Waybills">
           <field name="partner_id" />
@@ -569,7 +560,6 @@ TMS.waybill.category
     <record id="view_tms_waybill_calendar" model="ir.ui.view">
       <field name="name">tms.waybill.calendar</field>
       <field name="model">tms.waybill</field>
-      <field name="type">calendar</field>
       <field name="arch" type="xml">
         <calendar string="Waybills" color="state" date_start="date_order">
           <field name="partner_id"/>
@@ -581,7 +571,6 @@ TMS.waybill.category
     <record model="ir.ui.view" id="view_tms_waybill_graph">
       <field name="name">tms.waybill.graph</field>
       <field name="model">tms.waybill</field>
-      <field name="type">graph</field>
       <field name="arch" type="xml">
         <graph string="Waybill" type="bar">
           <field name="partner_id"/>
@@ -611,7 +600,6 @@ TMS.waybill.category
     <record id="view_waybill_invoice" model="ir.ui.view">
       <field name="name">Create Invoice from Waybills</field>
       <field name="model">tms.waybill.invoice</field>
-      <field name="type">form</field>
       <field name="arch" type="xml">
         <form string="Create Customer Invoice" version="7.0">
             <separator colspan="4" string="Create Customer Invoice from selected Waybills ?" />
@@ -641,7 +629,6 @@ TMS.waybill.category
     <record id="view_waybill_supplier_invoice" model="ir.ui.view">
       <field name="name">Create Supplier Invoice from Waybills</field>
       <field name="model">tms.waybill.supplier_invoice</field>
-      <field name="type">form</field>
       <field name="arch" type="xml">
         <form string="Create Supplier Invoice" version="7.0">
             <separator colspan="4" string="Create Supplier Invoice from selected Waybills ?" />

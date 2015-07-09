@@ -10,7 +10,6 @@ TMS.EVENT.CATEGORY
 	<record model="ir.ui.view" id="view_tms_event_category_tree">
         <field name="name">tms.event.category.tree</field>
         <field name="model">tms.event.category</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="TMS Event Categories">
 		        <field name="complete_name" />
@@ -30,7 +29,6 @@ TMS.EVENT.CATEGORY
         <record id="view_tms_event_category_form" model="ir.ui.view">
             <field name="name">tms.event.category.form</field>
             <field name="model">tms.event.category</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="TMS Unit Categories">
                     <field name="name" select="1"/>
@@ -73,7 +71,6 @@ TMS.EVENT.ACTION
 	<record model="ir.ui.view" id="view_tms_event_action_tree">
         <field name="name">tms.event.action.tree</field>
         <field name="model">tms.event.action</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="TMS Event Actions">
                 <field name="name" />
@@ -91,7 +88,6 @@ TMS.EVENT.ACTION
         <record id="view_tms_event_action_form" model="ir.ui.view">
             <field name="name">tms.event.action.form</field>
             <field name="model">tms.event.action</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="TMS Unit Actions" version="7.0">
                     <sheet>
@@ -144,7 +140,6 @@ TMS.EVENT
         <record id="view_tms_event_search" model="ir.ui.view">
             <field name="name">tms.event.search</field>
             <field name="model">tms.event</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="TMS Events">
                    <field name="name"/>
@@ -185,7 +180,6 @@ TMS.EVENT
 	<record model="ir.ui.view" id="view_tms_event_tree">
         <field name="name">tms.event.tree</field>
         <field name="model">tms.event</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="TMS Events" colors="gray:state=='cancel';red:state=='draft';">
                 <field name="date"/>
@@ -213,7 +207,6 @@ TMS.EVENT
         <record id="view_tms_event_form" model="ir.ui.view">
             <field name="name">tms.event.form</field>
             <field name="model">tms.event</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="TMS Events" version="7.0">
                     <header>
