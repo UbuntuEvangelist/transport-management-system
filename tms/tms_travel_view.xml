@@ -10,7 +10,6 @@ TMS.travel
         <record id="view_tms_travel_search" model="ir.ui.view">
             <field name="name">tms.travel.search</field>
             <field name="model">tms.travel</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="TMS Travels">
                    <filter string="Pending" icon="terp-gtk-media-pause" domain="[('state','=','draft')]"/>
@@ -71,7 +70,6 @@ TMS.travel
 	<record model="ir.ui.view" id="view_tms_travel_tree">
         <field name="name">tms.travel.tree</field>
         <field name="model">tms.travel</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Travels" colors="gray:state=='cancel';red:state=='draft';green:state=='progress';blue:state=='done';">                
                 <field name="name" />
@@ -104,7 +102,6 @@ TMS.travel
     <record id="view_tms_travel_graph" model="ir.ui.view">
         <field name="name">tms.travel.graph</field>
         <field name="model">tms.travel</field>
-        <field name="type">graph</field>
         <field name="arch" type="xml">
         <graph string="Travels" type="bar">
           <field name="unit_id"/>
@@ -118,7 +115,6 @@ TMS.travel
         <record id="view_tms_travel_form" model="ir.ui.view">
             <field name="name">tms.travel.form</field>
             <field name="model">tms.travel</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Travels" version="7.0">
                     <header>

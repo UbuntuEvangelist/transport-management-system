@@ -7,7 +7,6 @@
         <record model="ir.ui.view" id="tms_view_partner_form">
             <field name="name">TMS res.partner.form</field>
             <field name="model">res.partner</field>
-            <field name="type">form</field>
             <field name="priority">50</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">

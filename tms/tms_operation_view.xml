@@ -10,7 +10,6 @@ TMS.Operation
     <record id="view_tms_operation_search" model="ir.ui.view">
         <field name="name">tms.operation.search</field>
         <field name="model">tms.operation</field>
-        <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="TMS Operations">
                 <filter string="Draft" icon="terp-gtk-media-pause" domain="[('state','=','draft')]"/>
@@ -40,7 +39,6 @@ TMS.Operation
     <record model="ir.ui.view" id="view_tms_operation_tree">
         <field name="name">tms.operation.tree</field>
         <field name="model">tms.operation</field>
-        <field name="type">tree</field>
         <field name="arch" type="xml">
             <tree string="TMS operations" colors="gray:state=='cancel';red:state=='draft';green:state=='process';">
                 <field name="name" />
@@ -61,7 +59,6 @@ TMS.Operation
     <record id="view_tms_operation_form" model="ir.ui.view">
         <field name="name">tms.operation.form</field>
         <field name="model">tms.operation</field>
-        <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="TMS Operations" version="7.0">
             <header>

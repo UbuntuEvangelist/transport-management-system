@@ -10,7 +10,6 @@ TMS.FUELVOUCHER
         <record id="view_tms_fuelvoucher_search" model="ir.ui.view">
             <field name="name">tms.fuelvoucher.search</field>
             <field name="model">tms.fuelvoucher</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="TMS Fuel Vouchers">
                    <filter string="Draft" icon="terp-gtk-media-pause" domain="[('state','=','draft')]"/>
@@ -61,7 +60,6 @@ TMS.FUELVOUCHER
 	<record model="ir.ui.view" id="view_tms_fuelvoucher_tree">
         <field name="name">tms.fuelvoucher.tree</field>
         <field name="model">tms.fuelvoucher</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="TMS Fuel Vouchers" colors="gray:state=='cancel';red:state=='draft';green:state=='approved';blue:state=='confirmed';">
                 <field name="name" />
@@ -94,7 +92,6 @@ TMS.FUELVOUCHER
         <record id="view_tms_fuelvoucher_form" model="ir.ui.view">
             <field name="name">tms.fuelvoucher.form</field>
             <field name="model">tms.fuelvoucher</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="TMS Fuel Vouchers" version="7.0">
                     <header>
@@ -207,7 +204,6 @@ TMS.FUELVOUCHER
 	<record id="view_fuelvoucher_invoice" model="ir.ui.view">
 	<field name="name">Crear Facturas</field>
 	<field name="model">tms.fuelvoucher.invoice</field>
-	<field name="type">form</field>
 	<field name="arch" type="xml">
 	<form string="Create Invoice" version="7.0">
         <separator colspan="4" string="Create Supplier Invoice from selected Fuel Vouchers ?" />

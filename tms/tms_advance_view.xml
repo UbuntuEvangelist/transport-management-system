@@ -10,7 +10,6 @@ TMS.ADVANCE
     <record id="view_tms_advance_search" model="ir.ui.view">
       <field name="name">tms.advance.search</field>
       <field name="model">tms.advance</field>
-      <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="TMS Advances">
           <filter string="Draft" icon="terp-gtk-media-pause" domain="[('state','=','draft')]"/>
@@ -56,7 +55,6 @@ TMS.ADVANCE
     <record model="ir.ui.view" id="view_tms_advance_tree">
       <field name="name">tms.advance.tree</field>
       <field name="model">tms.advance</field>
-      <field name="type">tree</field>
       <field name="arch" type="xml">
         <tree string="TMS Advances" colors="gray:state=='cancel';red:state=='draft';green:state=='approved';blue:state=='confirmed';">
             <field name="name" />
@@ -84,7 +82,6 @@ TMS.ADVANCE
     <record id="view_tms_advance_form" model="ir.ui.view">
       <field name="name">tms.advance.form</field>
       <field name="model">tms.advance</field>
-      <field name="type">form</field>
       <field name="arch" type="xml">
         <form string="TMS Advances" version="7.0">
           <header>
@@ -189,7 +186,6 @@ TMS.ADVANCE
 	<record id="view_advance_invoice" model="ir.ui.view">
 	<field name="name">Crear Facturas</field>
 	<field name="model">tms.advance.invoice</field>
-	<field name="type">form</field>
 	<field name="arch" type="xml">
 	<form string="Require payment" version="7.0">
         <separator colspan="4" string="Are you sure you want to require payment for these advances ?" />
@@ -215,7 +211,6 @@ TMS.ADVANCE
 	<record id="tms_view_advance_payment" model="ir.ui.view">
 	<field name="name">Make Payment</field>
 	<field name="model">tms.advance.payment</field>
-	<field name="type">form</field>
 	<field name="arch" type="xml">
 	<form string="Make Payment" version="7.0">
         <separator colspan="4" string="Are you sure you want to create payment for selected driver advances ?" />

@@ -10,7 +10,7 @@ TMS.FACTOR
         <record id="view_tms_factor_tree" model="ir.ui.view">
           <field name="name">tms.factor.tree</field>
           <field name="model">tms.factor</field>
-          <field name="type">tree</field>
+        
           <field name="priority">2</field>
           <field name="arch" type="xml">
 	        <tree string="Billing Factors">
@@ -32,7 +32,6 @@ TMS.FACTOR
         <record id="view_tms_factor_form" model="ir.ui.view">
           <field name="name">tms.factor.form</field>
           <field name="model">tms.factor</field>
-          <field name="type">form</field>
           <field name="arch" type="xml">
 	        <form string="Factors" >
               <group colspan="4" col="4">
@@ -76,7 +75,6 @@ TMS.FACTOR.SPECIAL
 	<record model="ir.ui.view" id="view_tms_factor_special_search">
         <field name="name">tms.factor.special.search</field>
         <field name="model">tms.factor.special</field>
-		<field name="type">search</field>
 		<field name="arch" type="xml">
             <search string="Special Factors">
               <field name="name" />
@@ -88,7 +86,6 @@ TMS.FACTOR.SPECIAL
 	<record model="ir.ui.view" id="view_tms_factor_special_tree">
         <field name="name">tms.factor.special.tree</field>
         <field name="model">tms.factor.special</field>
-		<field name="type">tree</field>
 		<field name="arch" type="xml">
             <tree string="Special Factors">
                 <field name="name" />
@@ -104,7 +101,7 @@ TMS.FACTOR.SPECIAL
         <record id="view_tms_factor_special_form" model="ir.ui.view">
             <field name="name">tms.factor.special.form</field>
             <field name="model">tms.factor.special</field>
-            <field name="type">form</field>
+          
             <field name="arch" type="xml">
                 <form string="Unit Categories" version="7.0">
                     <sheet>

@@ -7,7 +7,6 @@
 	<record id="view_expense_cancel" model="ir.ui.view">
 	<field name="name">Create copy from Waybill on Cancell</field>
 	<field name="model">tms.expense.cancel</field>
-	<field name="type">form</field>
 	<field name="arch" type="xml">
 	<form string="Cancel" version="7.0">  
         <separator colspan="4" string="Cancel this Expense Record ?" />
@@ -40,7 +39,6 @@ TMS.EXPENSE
         <record id="view_tms_expense_tree" model="ir.ui.view">
             <field name="name">tms.expense.tree</field>
             <field name="model">tms.expense</field>
-            <field name="type">tree</field>
             <field name="priority">2</field>
             <field name="arch" type="xml">
                 <tree string="Waybills" colors="gray:state=='cancel';green:state=='approved';blue:state=='confirmed';">
@@ -70,7 +68,6 @@ TMS.EXPENSE
         <record id="view_tms_expense_form" model="ir.ui.view">
             <field name="name">tms.expense.form</field>
             <field name="model">tms.expense</field>
-            <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Travel Expenses" version="7.0">
                 <header>
@@ -265,7 +262,6 @@ TMS.EXPENSE
         <record id="view_tms_expense_filter" model="ir.ui.view">
             <field name="name">tms.expense.list.select</field>
             <field name="model">tms.expense</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Expenses">
                     <filter icon="terp-gtk-media-pause" string="Draft" domain="[('state','=','draft')]"/>
@@ -293,7 +289,6 @@ TMS.EXPENSE
         <record id="view_tms_expense_calendar" model="ir.ui.view">
             <field name="name">tms.expense.calendar</field>
             <field name="model">tms.expense</field>
-            <field name="type">calendar</field>
             <field name="arch" type="xml">
                 <calendar string="Expense" color="state" date_start="date">
                     <field name="employee_id"/>
@@ -305,7 +300,6 @@ TMS.EXPENSE
         <record model="ir.ui.view" id="view_tms_expense_graph">
             <field name="name">tms.expense.graph</field>
             <field name="model">tms.expense</field>
-            <field name="type">graph</field>
             <field name="arch" type="xml">
                 <graph string="Expense" type="bar">
                     <field name="employee_id"/>
@@ -338,7 +332,6 @@ TMS.EXPENSE.LINE
 <record id="view_tms_expense_line_tree" model="ir.ui.view">
     <field name="name">tms.expense.line.tree</field>
     <field name="model">tms.expense.line</field>
-    <field name="type">tree</field>
     <field name="priority">2</field>
     <field name="arch" type="xml">
         <tree string="Expense Lines" colors="blue:line_type=='salary';gray:line_type=='madeup_expense';red:price_total&lt;0;">
@@ -363,7 +356,6 @@ TMS.EXPENSE.LINE
     <record id="view_tms_expense_line_form" model="ir.ui.view">
         <field name="name">tms.expense.line.form</field>
         <field name="model">tms.expense.line</field>
-        <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Expense Lines">
                 <field name="travel_id" domain="[('id','in', tuple([x.id for x in paren.travel_ids]),)]" /> 
@@ -406,7 +398,6 @@ TMS.EXPENSE.LINE
         <record id="view_tms_expense_line_filter" model="ir.ui.view">
             <field name="name">tms.expense.line.list.select</field>
             <field name="model">tms.expense.line</field>
-            <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Expense Lines" >
                     <filter string="Line Type" icon="terp-check" domain="[]" context="{'group_by':'line_type'}"/>
@@ -421,7 +412,6 @@ TMS.EXPENSE.LINE
 	<record id="tms_view_expense_payment" model="ir.ui.view">
 	<field name="name">Make Payment</field>
 	<field name="model">tms.expense.payment</field>
-	<field name="type">form</field>
 	<field name="arch" type="xml">
 	<form string="Make Payment" version="7.0">
         <separator colspan="4" string="Are you sure you want to create payment for selected driver's Travel Expenses ?" />
