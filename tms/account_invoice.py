@@ -22,11 +22,7 @@
 
 
 
-from osv import osv, fields
-import time
-from datetime import datetime, date
-import decimal_precision as dp
-import openerp
+from openerp.osv import osv, fields
 from tools.translate import _
 
 class account_invoice(osv.osv):
@@ -166,11 +162,6 @@ class account_invoice(osv.osv):
                     'ref': ref,
                 })]
         return iml
-    
-    
-    
-    
-account_invoice()
 
 # Grouped Shipped Quantity by Product
 class tms_waybill_shipped_grouped(osv.osv):
@@ -208,6 +199,3 @@ class account_invoice_line(osv.osv):
             'account_id2'   : line.account_id.id,
             })
         return res
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

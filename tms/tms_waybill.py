@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,24 +15,23 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
-from osv import osv, fields
+from openerp.osv import osv, fields
 import time
 from datetime import datetime, date
 from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import decimal_precision as dp
 import netsvc
-import openerp
 from pytz import timezone
 
 
 # Waybill Category
 class tms_waybill_category(osv.osv):
-    _name ='tms.waybill.category'
+    _name = 'tms.waybill.category'
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _description = 'Waybill Categories'
 
@@ -1542,6 +1541,3 @@ class tms_waybill_supplier_invoice(osv.osv_memory):
             result = act_obj.read(cr, uid, [id], context=context)[0]
             result['domain'] = "[('id','in', [" + ','.join(map(str, invoices)) + "])]"
             return result
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

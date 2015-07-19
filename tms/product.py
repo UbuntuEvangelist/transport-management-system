@@ -19,10 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
-import time
-from datetime import datetime, date
-import decimal_precision as dp
+from openerp.osv import osv, fields
 from tools.translate import _
 
 
@@ -166,8 +163,6 @@ class product_product(osv.osv):
                 }
         return {'value': val}
 
-product_product()
-
 
 class product_category(osv.osv):
     _name = "product.category"
@@ -189,5 +184,3 @@ class product_category(osv.osv):
             view_load=True,
             help="Use this to define breakdown expense account per vehicle for Fuel, Travel Expenses, etc."),
     }
-    
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

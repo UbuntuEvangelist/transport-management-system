@@ -20,15 +20,7 @@
 ##############################################################################
 
 
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
-import time
-from datetime import datetime, date
-import openerp
+from openerp.osv import osv, fields
 
 # Agregamos un método en la clase ir_sequence para controlar secuencias de Viajes / Cartas Porte / Anticipos / Vales de Combustible 
 class ir_sequence(osv.osv):
@@ -36,11 +28,11 @@ class ir_sequence(osv.osv):
     _inherit = 'ir.sequence'
 
     _columns = {
-        'tms_waybill_sequence': openerp.osv.fields.boolean('TMS Waybill Sequence'),
-        'tms_waybill_automatic': openerp.osv.fields.boolean('TMS Waybill Automatic', help="Indicates if this Waybill Sequence will be automatically invoiced"),
-        'shop_id': openerp.osv.fields.many2one('sale.shop', 'Shop', domain="[('company_id','=',company_id)]"),        
+        'tms_waybill_sequence': fields.boolean('TMS Waybill Sequence'),
+        'tms_waybill_automatic': fields.boolean('TMS Waybill Automatic', help="Indicates if this Waybill Sequence will be automatically invoiced"),
+        'shop_id': fields.many2one('sale.shop', 'Shop', domain="[('company_id','=',company_id)]"),        
         }
-    
+
 #    def tms_get_id(self, cr, uid, sequence_id, context=None):
         #print sequence_id
 #        sql =  "SELECT id, number_next, prefix, suffix, padding FROM ir_sequence WHERE active=true AND id=" + str(sequence_id)
@@ -54,8 +46,3 @@ class ir_sequence(osv.osv):
 #            else:
 #                return self._process(res['prefix']) + self._process(res['suffix'])
 #        return False
-    
-ir_sequence()
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

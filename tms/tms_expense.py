@@ -19,14 +19,12 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from openerp.osv import osv, fields
 import time
-from datetime import datetime, date
 from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import decimal_precision as dp
 import netsvc
-import openerp
 
 
 # TMS Travel Expenses
@@ -46,7 +44,6 @@ class tms_expense(osv.osv):
                                 }
         return res
 
-
     def _get_route_distance(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         distance=0.0
@@ -61,7 +58,7 @@ class tms_expense(osv.osv):
         for expense in self.browse(cr, uid, ids, context=context):
             res[expense.id] = (expense.distance_routes / expense.fuel_qty) if expense.fuel_qty > 0.0 else 0.0
         return res
-            
+
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         cur_obj = self.pool.get('res.currency')
         res = {}
@@ -93,7 +90,6 @@ class tms_expense(osv.osv):
                          _('Currency Error !'), 
                          _('You can not create a Travel Expense Record with Advances with different Currency. This Expense record was created with %s and Advance is with %s ') % (expense.currency_id.name, _advance.currency_id.name))
                 advance += _advance.total
-
             for _fuelvoucher in expense.fuelvoucher_ids:
                 if _fuelvoucher.currency_id.id != cur.id:
                     raise osv.except_osv(
@@ -101,8 +97,6 @@ class tms_expense(osv.osv):
                          _('You can not create a Travel Expense Record with Fuel Vouchers with different Currency. This Expense record was created with %s and Fuel Voucher is with %s ') % (expense.currency_id.name, _advance.currency_id.name))
                 fuel_voucher += _fuelvoucher.price_subtotal
                 fuel_qty += _fuelvoucher.product_uom_qty
-
-
             negative_balance = real_expense = madeup_expense = fuel = salary = salary_retention = salary_discount = tax_real = tax_total = subtotal_real = subtotal_total = total_real = total_total = balance = 0.0
             for line in expense.expense_line:
                     madeup_expense  += line.price_subtotal if line.product_id.tms_category == 'madeup_expense' else 0.0
@@ -115,15 +109,11 @@ class tms_expense(osv.osv):
                     fuel_qty        += line.product_uom_qty if (line.product_id.tms_category == 'fuel' and not line.fuel_voucher) else 0.0 
                     tax_total       += line.tax_amount if line.product_id.tms_category != 'madeup_expense' else 0.0
                     tax_real        += line.tax_amount if (line.product_id.tms_category == 'real_expense' or (line.product_id.tms_category == 'fuel' and not line.fuel_voucher)) else 0.0
-                    
-
-
             subtotal_real = real_expense + fuel + salary + salary_retention + salary_discount + negative_balance
             total_real = subtotal_real + tax_real
             subtotal_total = subtotal_real + fuel_voucher
             total_total = subtotal_total + tax_total
             balance = total_real - advance
-
             res[expense.id] = { 
                 'amount_real_expense'       : cur_obj.round(cr, uid, cur, real_expense),
                 'amount_madeup_expense'     : cur_obj.round(cr, uid, cur, madeup_expense),
@@ -144,7 +134,6 @@ class tms_expense(osv.osv):
                 'amount_balance'            : cur_obj.round(cr, uid, cur, balance),
                 'amount_balance2'           : cur_obj.round(cr, uid, cur, balance),
                               }
-
         return res
 
     def _paid(self, cr, uid, ids, field_name, args, context=None):
@@ -158,7 +147,6 @@ class tms_expense(osv.osv):
                         return res
         return res
 
-    
     def _get_move_line_from_reconcile(self, cr, uid, ids, context=None):
         move = {}
         for r in self.pool.get('account.move.reconcile').browse(cr, uid, ids, context=context):
@@ -166,7 +154,6 @@ class tms_expense(osv.osv):
                 move[line.move_id.id] = True
             for line in r.line_id:
                 move[line.move_id.id] = True
-
         expense_ids = []
         if move:
             expense_ids = self.pool.get('tms.expense').search(cr, uid, [('move_id','in',move.keys())], context=context)
@@ -180,9 +167,8 @@ class tms_expense(osv.osv):
                 res[expense.id] = {'fuel_diff': float(expense.fuel_qty_real) - float(expense.fuel_qty),
                                    'global_fuel_efficiency_real': (expense.distance_real / expense.fuel_qty_real) if expense.fuel_qty_real else 0.0,
                                   }
-        return res
-    
-    
+        return res    
+
     _columns = {
         'name': fields.char('Name', size=64, readonly=True, select=True),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -205,54 +191,30 @@ class tms_expense(osv.osv):
             ], 'Expense  Policy', readonly=True,
             help=" Manual - This expense record is manual\nAutomatic - This expense record is automatically generated by parametrization", select=True),
         'origin': fields.char('Source Document', size=64, help="Reference of the document that generated this Expense Record",readonly=False, states={'confirmed': [('readonly', True)],'closed':[('readonly',True)]}),
-
-
         'date': fields.date('Date', required=True, select=True,readonly=False, states={'confirmed': [('readonly', True)],'closed':[('readonly',True)]}),
-
         'invoice_id': fields.many2one('account.invoice','Invoice Record', readonly=True),
         'invoiced':  fields.function(_invoiced, method=True, string='Invoiced', type='boolean', multi='invoiced'),
         'invoice_paid':  fields.function(_invoiced, method=True, string='Paid', type='boolean', multi='invoiced'),
         'invoice_name':  fields.function(_invoiced, method=True, string='Invoice', type='char', size=64, multi='invoiced', store=True),
-
         'expense_line': fields.one2many('tms.expense.line', 'expense_id', 'Expense Lines', readonly=False, states={'confirmed': [('readonly', True)],'closed':[('readonly',True)]}),
-
-
         'amount_real_expense': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Expenses', type='float', multi=True),
-
         'amount_madeup_expense': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Fake Expenses', type='float', multi=True), 
-
         'fuel_qty'  : fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Fuel Qty', type='float', multi=True),
         'amount_fuel': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Fuel (Cash)', type='float', multi=True),
-
         'amount_fuel_voucher': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Fuel (Voucher)', type='float', multi=True),
-
         'amount_salary': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Salary', type='float', multi=True),
-
         'amount_net_salary': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Net Salary', type='float', multi=True),
-
         'amount_salary_retention': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Salary Retentions', type='float', multi=True),
-
         'amount_salary_discount': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Salary Discounts', type='float', multi=True),
-
         'amount_advance': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Advances', type='float', multi=True),
-
         'amount_balance': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Balance', type='float', multi=True),
         'amount_balance2': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Balance', type='float', multi=True, store=True),
-
         'amount_tax_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes (All)', type='float', multi=True),
-
         'amount_tax_real': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes (Real)', type='float', multi=True),
-
         'amount_total_real': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total (Real)', type='float', multi=True),
-
         'amount_total_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total (All)', type='float', multi=True),
-
         'amount_subtotal_real': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='SubTotal (Real)', type='float', multi=True),
-
         'amount_subtotal_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='SubTotal (All)', type='float', multi=True),
-        
-
-
         'vehicle_id'        : fields.many2one('fleet.vehicle', 'Vehicle'),
         'odometer_id'       : fields.many2one('fleet.vehicle.odometer.device', 'Odometer'),
         'last_odometer'     : fields.float('Last Read', digits=(16,2)),
@@ -261,11 +223,9 @@ class tms_expense(osv.osv):
         'distance_routes'   : fields.function(_get_route_distance, string='Distance from routes', method=True, type='float', digits=(16,2), help="Routes Distance"),
         'distance_real'     : fields.float('Distance Real', digits=(16,2), help="Route obtained by electronic reading and/or GPS"),
         'odometer_log_id'   : fields.many2one('fleet.vehicle.odometer', 'Odometer Record'),
-        
         'global_fuel_efficiency_routes': fields.function(_get_fuel_efficiency, string='Global Fuel Efficiency Routes', method=True, type='float', digits=(16,2)),        
         'loaded_fuel_efficiency': fields.float('Loaded Fuel Efficiency', required=False, digits=(14,2)),
         'unloaded_fuel_efficiency': fields.float('Unloaded Fuel Efficiency', required=False, digits=(14,2)),
-    
         'create_uid' : fields.many2one('res.users', 'Created by', readonly=True),
         'create_date': fields.datetime('Creation Date', readonly=True, select=True),
         'cancelled_by' : fields.many2one('res.users', 'Cancelled by', readonly=True),
@@ -276,15 +236,12 @@ class tms_expense(osv.osv):
         'date_confirmed': fields.datetime('Date Confirmed', readonly=True),
         'drafted_by' : fields.many2one('res.users', 'Drafted by', readonly=True),
         'date_drafted': fields.datetime('Date Drafted', readonly=True),
-
         'notes': fields.text('Notes', readonly=False, states={'closed':[('readonly',True)]}),
         'move_id'       : fields.many2one('account.move', 'Journal Entry', readonly=True, select=1, ondelete='restrict', help="Link to the automatically generated Journal Items."),
 
         'paid'          : fields.function(_paid, method=True, string='Paid', type='boolean', multi=False,
                                           store = {'tms.expense': (lambda self, cr, uid, ids, c={}: ids, None, 10),
-                                                   'account.move.reconcile': (_get_move_line_from_reconcile, None, 50)}),
-
-        
+                                                   'account.move.reconcile': (_get_move_line_from_reconcile, None, 50)}),        
         'fuelvoucher_ids':fields.one2many('tms.fuelvoucher', 'expense_id', string='Fuel Vouchers', readonly=True),
         'advance_ids':fields.one2many('tms.advance', 'expense_id', string='Advances', readonly=True),
         'parameter_distance': fields.integer('Distance Parameter', help="1 = Travel, 2 = Travel Expense, 3 = Manual, 4 = Tyre"),
@@ -323,13 +280,12 @@ class tms_expense(osv.osv):
                     first = False
         return True
 
-
     def _check_odometer(self, cr, uid, ids, context=None):         
         for record in self.browse(cr, uid, ids, context=context):
             if record.current_odometer <= record.last_odometer:
                 return False
         return True
-    
+
     def _check_date(self, cr, uid, ids, context=None):         
         for record in self.browse(cr, uid, ids, context=context):
             # print "record.date: ", record.date
@@ -339,7 +295,6 @@ class tms_expense(osv.osv):
             return not bool(len(data))
         return True
 
-
     _constraints = [
         (_check_units_in_travels, 'You can not create a Travel Expense Record with several units.', ['travel_ids']),
         (_check_odometer, 'You can not have Current Reading <= Last Reading !', ['current_odometer']),
@@ -347,7 +302,6 @@ class tms_expense(osv.osv):
     ]
 
     _order = 'name desc'
-
 
     def on_change_employee_id(self, cr, uid, ids, employee_id, context=None):
         expense_obj = self.pool.get('tms.expense')
@@ -365,21 +319,16 @@ class tms_expense(osv.osv):
             for expense in self.browse(cr, uid, ids):
                 exec factor_special_obj.browse(cr, uid, factor_special_ids)[0].python_code
         return
-                    
-    def get_salary_advances_and_fuel_vouchers(self, cr, uid, ids, vals, context=None):  
 
+    def get_salary_advances_and_fuel_vouchers(self, cr, uid, ids, vals, context=None):  
         prod_obj = self.pool.get('product.product')
-        
         salary_id = prod_obj.search(cr, uid, [('tms_category', '=', 'salary'),('tms_default_salary','=', 1),('active','=', 1)], limit=1)
         if not salary_id:
             raise osv.except_osv(
                         _('Missing configuration !'),
                         _('There is no product defined as Default Salary !!!'))
         salary = prod_obj.browse(cr, uid, salary_id, context=None)[0]
-
-
         qty = amount_untaxed = 0.0
-
         factor_obj = self.pool.get('tms.factor')
         factor_special_obj = self.pool.get('tms.factor.special')
         expense_line_obj = self.pool.get('tms.expense.line')
@@ -387,12 +336,10 @@ class tms_expense(osv.osv):
         travel_obj = self.pool.get('tms.travel')
         fuelvoucher_obj = self.pool.get('tms.fuelvoucher')
         advance_obj     = self.pool.get('tms.advance')
-
         res = expense_line_obj.search(cr, uid, [('expense_id', '=', ids[0]),('control','=', 1),('loan_id','=',False)])
         if len(res):
             res = expense_line_obj.unlink(cr, uid, res)
         fuel = 0.0
-
         for expense in self.browse(cr, uid, ids):
             currency_id = expense.currency_id.id
             # Quitamos la referencia en caso de que ya existan registros asociados a la Liquidacion
@@ -400,11 +347,9 @@ class tms_expense(osv.osv):
             fuelvoucher_ids = fuelvoucher_obj.search(cr, uid, [('expense_id', '=', expense.id)])
             if fuelvoucher_ids:
                 fuelvoucher_obj.write(cr, uid, fuelvoucher_ids, {'expense_id': False, 'state':'confirmed', 'closed_by': False,'date_closed': False})
-
             advance_ids = advance_obj.search(cr, uid, [('expense_id', '=', expense.id)])
             if advance_ids:
                 advance_obj.write(cr, uid, advance_ids, {'expense_id': False, 'state':'confirmed', 'closed_by': False, 'date_closed': False})
-
             if not expense.driver_helper:
                 travel_ids = travel_obj.search(cr, uid, [('expense_id', '=', expense.id)])
                 if travel_ids:
@@ -413,7 +358,6 @@ class tms_expense(osv.osv):
                 travel_ids = travel_obj.search(cr, uid, [('expense2_id', '=', expense.id)])
                 if travel_ids:
                     travel_obj.write(cr, uid, travel_ids, {'expense2_id': False})
-
             travel_ids = []
             for travel in (expense.travel_ids if not expense.driver_helper else expense.travel_ids2):
                 travel_ids.append(travel.id)
@@ -422,7 +366,6 @@ class tms_expense(osv.osv):
                     exec factor_special_obj.browse(cr, uid, factor_special_ids, driver_helper=expense.driver_helper)[0].python_code
                 else:
                     result = factor_obj.calculate(cr, uid, 'expense', False, 'driver', [travel.id], driver_helper=expense.driver_helper)
-
                 #salary += result
                 xline = {
                         'travel_id'         : travel.id,
@@ -438,7 +381,6 @@ class tms_expense(osv.osv):
                         'operation_id'      : travel.operation_id.id,
                         'tax_id'            : [(6, 0, [x.id for x in salary.supplier_taxes_id])],
                         }
-
                 if result:
                     res = expense_line_obj.create(cr, uid, xline)
                 qty = 0.0
@@ -468,7 +410,6 @@ class tms_expense(osv.osv):
                                 }
                         res = expense_line_obj.create(cr, uid, xline)
                         fuelvoucher_obj.write(cr, uid, [fuelvoucher.id], {'expense_id': expense.id, 'state':'closed','closed_by':uid,'date_closed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
-                        
                 for advance in travel.advance_ids:                    
                     if advance.state == 'cancel':
                         continue
@@ -503,7 +444,6 @@ class tms_expense(osv.osv):
                 else:
                     travel_obj.write(cr, uid, [travel.id], {'expense2_id': expense.id})
                 self.pool.get('tms.expense.loan').get_loan_discounts(cr, uid, expense.employee_id.id, expense.id)
-                
             #Revisamos si tiene un Balance en contra
             cr.execute("select id from tms_expense where employee_id = %s and state = 'confirmed' order by date desc, date_confirmed desc limit 1" % (expense.employee_id.id))
             data = filter(None, map(lambda x:x[0], cr.fetchall()))
@@ -532,7 +472,6 @@ class tms_expense(osv.osv):
                         'tax_id'            : [(6, 0, [x.id for x in red_balance.supplier_taxes_id])],                                
                         }
                     res = expense_line_obj.create(cr, uid, xline)
-
                     
             # Revisamos si se tiene que hacer Descuento por Rendimiento bajo
             if int(self.pool.get('ir.config_parameter').get_param(cr, uid, 'tms_property_discount_for_low_fuel_efficiency_performance', context=context)[0]) \
@@ -551,10 +490,8 @@ class tms_expense(osv.osv):
                 elif fuel_id_confirmed and not fuel_id_closed:
                     fuelvoucher_confirmed = fuelvoucher_obj.browse(cr, uid, fuel_id_confirmed)[0]
                     fuel_cost = fuelvoucher_confirmed.price_unit
-                
                 if not fuel_cost:
                     fuel_cost = float(self.pool.get('ir.config_parameter').get_param(cr, uid, 'tms_property_fuel_cost_for_discount', context=context)[0])
-
                 if fuel_qty_diff < 0.0: 
                     fuel_discount_prod_id = prod_obj.search(cr, uid, [('tms_category', '=', 'salary_discount'),('tms_default_fuel_discount','=', 1),('active','=', 1)], limit=1)
                     if not fuel_discount_prod_id:
@@ -574,12 +511,9 @@ class tms_expense(osv.osv):
                         'control'           : True,
                         'tax_id'            : [(6, 0, [x.id for x in fuel_discount_prod.supplier_taxes_id])],                                
                         }
-                    res = expense_line_obj.create(cr, uid, xline)
-        
+                    res = expense_line_obj.create(cr, uid, xline)        
         return
-    
-    
-    
+
     def on_change_travel_ids(self, cr, uid, ids, travel_ids, driver_helper, context=None):
         res = {'value' : 
                            {'unit_id'          : False,
@@ -590,7 +524,6 @@ class tms_expense(osv.osv):
                             'distance_real'    : 0.0,
                             } 
                            }
-
         distance_extraction = 0.0
         for expense in self.browse(cr, uid, ids):
             if not expense.driver_helper:
@@ -598,7 +531,6 @@ class tms_expense(osv.osv):
                     distance_extraction += travel.distance_extraction
             else:
                 distance_extraction = 1.0
-        
         travels = []
         for rec in travel_ids[0][2]:
             travels.append(rec)
@@ -628,9 +560,8 @@ class tms_expense(osv.osv):
                 raise osv.except_osv(
                         _('Record Warning !'),
                         _('There is no Active Odometer for vehicle %s') % (travel.unit_id.name))     
-        return res
-    
-    
+        return res    
+
     def on_change_fuel_qty_real(self, cr, uid, ids, distance_real, fuel_qty_real, fuel_qty):
         res = {}
         if fuel_qty_real:
@@ -641,7 +572,6 @@ class tms_expense(osv.osv):
                   }
         return res
 
-    
     def on_change_current_odometer(self, cr, uid, ids, vehicle_id, last_odometer, current_odometer, distance_real, global_fuel_efficiency_real, fuel_qty_real, context=None):
         distance = round(current_odometer - last_odometer, 2)
         accum = round(self.pool.get('fleet.vehicle').browse(cr, uid, [vehicle_id], context=context)[0].odometer + distance , 2)
@@ -664,7 +594,6 @@ class tms_expense(osv.osv):
                 }
         return res
 
-
     def on_change_vehicle_odometer(self, cr, uid, ids, vehicle_id, last_odometer, vehicle_odometer, global_fuel_efficiency_real, context=None):
         return {}
         distance = vehicle_odometer - self.pool.get('fleet.vehicle').browse(cr, uid, [vehicle_id], context=context)[0].odometer
@@ -676,7 +605,6 @@ class tms_expense(osv.osv):
                         }    
                 }
 
-
     def write(self, cr, uid, ids, vals, context=None):
         values = vals
         if 'vehicle_id' in vals and vals['vehicle_id']:
@@ -687,10 +615,7 @@ class tms_expense(osv.osv):
                 self.get_salary_advances_and_fuel_vouchers(cr, uid, ids, vals)
                 self.get_salary_retentions(cr, uid, ids, vals)
                 self.pool.get('tms.expense.loan').get_loan_discounts(cr, uid, rec.employee_id.id, rec.id)
-
         return True
-
-
 
     def create(self, cr, uid, vals, context=None):
         values = vals
@@ -702,11 +627,8 @@ class tms_expense(osv.osv):
                 values['name'] = seq_number
             else:
                 raise osv.except_osv(_('Expense Sequence Error !'), _('You have not defined Expense Sequence for shop ' + shop.name))
-
-
         if 'vehicle_id' in vals and vals['vehicle_id']:
             values['unit_id'] = vals['vehicle_id']
-
         cr.execute("select id from tms_expense where state in ('draft', 'approved') and employee_id = " + str(vals['employee_id']))
         data = filter(None, map(lambda x:x[0], cr.fetchall()))
         if data:
@@ -716,7 +638,6 @@ class tms_expense(osv.osv):
         self.get_salary_retentions(cr, uid, [res])
         self.pool.get('tms.expense.loan').get_loan_discounts(cr, uid, values['employee_id'], res)
         return res
-
 
     def action_approve(self, cr, uid, ids, context=None):
         for expense in self.browse(cr, uid, ids, context=context):            
@@ -729,7 +650,6 @@ class tms_expense(osv.osv):
                 message = _("Expense '%s' is set to approved.") % name
             self.log(cr, uid, id, message)
         return True
-
 
     def action_confirm(self, cr, uid, ids, context=None):                
         for expense in self.browse(cr, uid, ids, context=None):
@@ -772,7 +692,6 @@ class tms_expense(osv.osv):
         exp_invoice.makeInvoices(cr, uid, ids, context=None)
         return True
 
-
 # Adding relation between Advances and Travel Expenses
 class tms_advance(osv.osv):
     _inherit = "tms.advance"
@@ -802,9 +721,6 @@ class tms_travel(osv.osv):
         'expense2_id'   : fields.many2one('tms.expense', 'Expense Record for Driver Helper', required=False, readonly=True),
     }
 
-tms_travel()
-
-
 # Class for Expense Lines
 class tms_expense_line(osv.osv):
     _name = 'tms.expense.line'
@@ -822,18 +738,15 @@ class tms_expense_line(osv.osv):
             addr_id = self.pool.get('res.partner').address_get(cr, uid, [partner_id], ['invoice'])['invoice']
             taxes = tax_obj.compute_all(cr, uid, line.product_id.supplier_taxes_id, price, line.product_uom_qty, addr_id, line.product_id, line.company_id.partner_id)
             cur = line.expense_id.currency_id
-
             amount_with_taxes = cur_obj.round(cr, uid, cur, taxes['total_included'])
             amount_tax = cur_obj.round(cr, uid, cur, taxes['total_included']) - (cur_obj.round(cr, uid, cur, taxes['total']) or 0.0) + \
                         cur_obj.round(cr, uid, cur, line.special_tax_amount)
-            
             price_subtotal = line.price_unit * line.product_uom_qty
             res[line.id] =  {   'price_subtotal': price_subtotal,
                                 'price_total'   : amount_with_taxes,
                                 'tax_amount'    : amount_tax,
                                 }
         return res
-
 
     _columns = {
         'operation_id'      : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False),        
@@ -883,7 +796,6 @@ class tms_expense_line(osv.osv):
         'invoice_date'      : fields.date('Date'),
         'invoice_number'    : fields.char('Invoice Number', size=64),
         'invoice_id'        : fields.many2one('account.invoice', 'Supplier Invoice', readonly=True),
-
     }
     _order = 'sequence'
 
@@ -947,11 +859,7 @@ class tms_expense_line(osv.osv):
                 }
                }
         return res
-        
 
-
-    
-    
 # Wizard que permite validar la cancelacion de una Liquidacion
 class tms_expense_cancel(osv.osv_memory):
 
@@ -959,7 +867,6 @@ class tms_expense_cancel(osv.osv_memory):
 
     _name = 'tms.expense.cancel'
     _description = 'Validate Expense Record Cancellation'
-
 
     def action_cancel(self, cr, uid, ids, context=None):
 
@@ -971,9 +878,7 @@ class tms_expense_cancel(osv.osv_memory):
              @param context: A standard dictionary
              @return : retrun view of Invoice
         """
-
         record_id =  context.get('active_ids',[])
-
         if record_id:
             invoice_obj = self.pool.get('account.invoice')
             expense_obj = self.pool.get('tms.expense')
@@ -987,14 +892,11 @@ class tms_expense_cancel(osv.osv_memory):
                     raise osv.except_osv(
                             _('Could not cancel Expense Record!'),
                             _('This Expense Record is not the last one for this driver'))
-
-
                 if expense.paid:
                     raise osv.except_osv(
                             _('Could not cancel Expense Record!'),
                             _('This Expense Record\'s is already paid'))
                     return False
-
                 if expense.state == 'confirmed': # Unreconcile & Cancel Invoices linked to this Travel Expense Record
                     reconcile_ids = []
                     invoice_ids = []
@@ -1006,11 +908,9 @@ class tms_expense_cancel(osv.osv_memory):
                                     reconcile_ids.append(move_line.reconcile_id.id)
                     if reconcile_ids:
                         obj_move_reconcile.unlink(cr, uid, reconcile_ids, context=context)
-
                     if invoice_ids:
                         wres = invoice_obj.action_cancel(cr, uid, invoice_ids, context)
                         #wres = invoice_obj.unlink(cr, uid, invoice_ids, context)
-                
                 move_id = expense.move_id.id
                 move_state = expense.move_id.state
                 expense_obj.write(cr, uid, record_id, {'state':'cancel', 'cancelled_by':uid,'date_cancelled':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT), 'move_id': False})
@@ -1021,45 +921,32 @@ class tms_expense_cancel(osv.osv_memory):
                 expense_line_obj.unlink(cr, uid, [x.id for x in expense_obj.browse(cr, uid, record_id)[0].expense_line])
                 if len(loan_ids):
                     expense_loan_obj.write(cr, uid,loan_ids, {'state':'confirmed', 'closed_by' : False, 'date_closed':False} )
-
-                
                 if move_id:
                     move_obj = self.pool.get('account.move')
                     if move_state == 'posted':
                         move_obj.button_cancel(cr, uid, [move_id]) 
                     move_obj.unlink(cr, uid, [move_id])
-
-
                 travel_ids = []
                 for travel in (expense.travel_ids if not expense.driver_helper else expense.travel_ids2):
                     travel_ids.append(travel.id)
-
                 fuelvoucher_obj = self.pool.get('tms.fuelvoucher')
                 advance_obj     = self.pool.get('tms.advance')
                 travel_obj     = self.pool.get('tms.travel')
-                
                 record_ids = fuelvoucher_obj.search(cr, uid, [('travel_id', 'in', tuple(travel_ids),), ('employee_id', '=', expense.employee_id.id), ('state','!=', 'cancel')])
                 fuelvoucher_obj.write(cr, uid, record_ids, {'expense_id': False, 'state':'confirmed','closed_by':False,'date_closed':False})
-
                 record_ids = advance_obj.search(cr, uid, [('travel_id', 'in', tuple(travel_ids),), ('employee_id', '=', expense.employee_id.id), ('state','!=', 'cancel')])
                 advance_obj.write(cr, uid, record_ids, {'expense_id': False, 'state':'confirmed','closed_by':False,'date_closed':False})
-    
                 if not expense.driver_helper:
                     travel_obj.write(cr, uid, travel_ids, {'expense_id': False, 'state':'done','closed_by':False,'date_closed':False})
                 else:
                     travel_obj.write(cr, uid, travel_ids, {'expense2_id': False})
-
-                
                 if not expense.parameter_distance:
                     raise osv.except_osv(
                         _('Could not Confirm Expense Record !'),
                         _('Parameter to determine Vehicle distance update from does not exist.'))
                 elif expense.parameter_distance == 2 and expense.state=='confirmed': # Revisamos el parametro (tms_property_update_vehicle_distance) donde se define donde se actualizan los kms/millas a las unidades 
                     self.pool.get('fleet.vehicle.odometer').unlink_odometer_rec(cr, uid, ids, travel_ids, expense.unit_id.id)
-
         return {'type': 'ir.actions.act_window_close'}
-
-tms_expense_cancel()
 
 # Wizard que permite generar el pago de la liquidación
 class tms_expense_payment(osv.osv_memory):
@@ -1069,20 +956,14 @@ class tms_expense_payment(osv.osv_memory):
     _name = 'tms.expense.payment'
     _description = 'Make Payment for Travel Expenses'
 
-
-
     def makePayment(self, cr, uid, ids, context=None):
-        
         if context is None:
             record_ids = ids
         else:
             record_ids =  context.get('active_ids',[])
-
         if not record_ids: return []
         ids = record_ids
-
         dummy, view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_voucher', 'view_vendor_receipt_dialog_form')
-
         cr.execute("select count(distinct(employee_id, currency_id)) from tms_expense where state in ('confirmed') and id IN %s",(tuple(ids),))
         xids = filter(None, map(lambda x:x[0], cr.fetchall()))
         if len(xids) > 1:
@@ -1098,11 +979,9 @@ class tms_expense_payment(osv.osv_memory):
                 for move_line in expense.move_id.line_id:
                     if move_line.credit > 0.0 and expense.employee_id.address_home_id.property_account_payable.id == move_line.account_id.id:
                         move_line_ids.append(move_line.id)
-            
         if not amount:    
             raise osv.except_osv('Warning !',
                                  'All Travel Expenses are already paid or are not in Confirmed State...')
-        
         res = {
             'name':_("Travel Expense Payment"),
             'view_mode': 'form',
@@ -1126,7 +1005,6 @@ class tms_expense_payment(osv.osv_memory):
     
         return res
 
-
 # Wizard que permite generar la poliza con el monto a pagar correspondiente a la liquidación del Operador
 class tms_expense_invoice(osv.osv_memory):
 
@@ -1145,12 +1023,10 @@ class tms_expense_invoice(osv.osv_memory):
              @param context: A standard dictionary
              @return : retrun view of Invoice
         """
-
         if context is None:
             record_ids = ids
         else:
             record_ids =  context.get('active_ids',[])
-
         if record_ids:
             res = False
             invoices = []
@@ -1164,30 +1040,24 @@ class tms_expense_invoice(osv.osv_memory):
             expense_line_obj=self.pool.get('tms.expense.line')
             period_obj = self.pool.get('account.period')
             move_obj = self.pool.get('account.move')
-
             journal_id = account_jrnl_obj.search(cr, uid, [('type', '=', 'general'),('tms_expense_journal','=', 1)], context=None)
             if not journal_id:
                 raise osv.except_osv('Error !',
                                  'You have not defined Travel Expense Purchase Journal...')
             journal_id = journal_id and journal_id[0]
-           
             cr.execute("select distinct employee_id, currency_id from tms_expense where invoice_id is null and state='approved' and id IN %s",(tuple(record_ids),))
             data_ids = cr.fetchall()
             if not len(data_ids):
                 raise osv.except_osv('Warning !',
                                  'Selected records are not Approved or already sent for payment...')
             for data in data_ids:
-
                 expenses_ids = expense_obj.search(cr, uid, [('state','=','approved'),('employee_id','=', data[0]), ('currency_id','=', data[1]), ('id','in', tuple(record_ids),)])
-
                 for expense in expense_obj.browse(cr, uid, expenses_ids):
-
                     period_id = period_obj.search(cr, uid, [('date_start', '<=', expense.date),('date_stop','>=', expense.date), ('state','=','draft')], context=None)
                     if not period_id:
                         raise osv.except_osv(_('Warning !'),
                                 _('There is no valid account period for this date %s. Period does not exists or is already closed') % \
                                         (expense.date,))
-
                     if not (expense.employee_id.tms_advance_account_id.id and expense.employee_id.tms_expense_negative_balance_account_id.id):
                         raise osv.except_osv(_('Warning !'),
                                 _('There is no advance account and/or Travel Expense Negative Balance account defined ' \
@@ -1199,7 +1069,6 @@ class tms_expense_invoice(osv.osv_memory):
                                         (expense.employee_id.name, expense.employee_id.id,))
                     advance_account = expense.employee_id.tms_advance_account_id.id
                     negative_balance_account = expense.employee_id.tms_expense_negative_balance_account_id.id
-                    
                     advance_account = account_fiscal_obj.map_account(cr, uid, False, advance_account)
                     negative_balance_account = account_fiscal_obj.map_account(cr, uid, False, negative_balance_account)
 
@@ -1222,11 +1091,11 @@ class tms_expense_invoice(osv.osv_memory):
                                 })
                         move_lines.append(move_line)
                         notes += '\n' + _('Advance Discount')
-                    
+
                     ### Recorremos las lineas de gastos, estas deben ser cualquiera excepto: 
                     ### * Vales de Combustible
                     ### * Facilidades administrativas
-                    
+
                     invoice_ids = []
                     for line in expense.expense_line:
                         if line.line_type != ('madeup_expense') and not line.fuel_voucher:                            
@@ -1240,7 +1109,6 @@ class tms_expense_invoice(osv.osv_memory):
                                 inv_id = self.create_supplier_invoice(cr, uid, line)
                                 invoice_ids.append(inv_id)
                                 yres = expense_line_obj.write(cr, uid, [line.id], {'invoice_id': inv_id})
-
                             ### Creamos la partida de cada Gasto "Valido"
                             move_line = (0,0, {
                                 'name'              : expense.name + ((' |%s|' % (inv_id)) if inv_id else '') + line.name,
@@ -1260,9 +1128,6 @@ class tms_expense_invoice(osv.osv_memory):
                                 })
                             move_lines.append(move_line)
                             notes += '\n' + line.name
-                            
-                            
-                                
                             ### En caso de que el producto tenga definido impuestos, generamos las partidas correspondientes.
                             for tax in line.product_id.supplier_taxes_id:
                                 tax_account = tax.account_collected_voucher_id.id
@@ -1283,9 +1148,7 @@ class tms_expense_invoice(osv.osv_memory):
                                     'tax_id_secondary' : tax.id if line.is_invoice else False,
                                     'amount_base'   : round(abs(line.price_subtotal),precision) if line.is_invoice else False,
                                     })
-                                
                                 move_lines.append(move_line)
-                                
                                 ### En caso de que sea una factura, se genera automaticamente la cancelación del impuesto
                                 if line.is_invoice:
                                     tax_account = tax.account_collected_id.id
@@ -1294,7 +1157,6 @@ class tms_expense_invoice(osv.osv_memory):
                                                 _('Tax Account is not defined for Tax %s (id:%d)') % \
                                                     (tax.name, tax.id,))
                                     tax_amount = round(line.price_subtotal * tax.amount, precision)
-
                                     move_line = (0,0, {
                                         'name'          : expense.name + ' - ' + tax.name + ' - ' + line.name + ' - ' + line.employee_id.name + ' (' + str(line.employee_id.id) + ')',
                                         'ref'           : expense.name,
@@ -1306,14 +1168,7 @@ class tms_expense_invoice(osv.osv_memory):
                                         #'tax_id_secondary' : tax.id,
                                         #'amount_base'   : round(abs(line.price_subtotal),precision),                                            
                                         })
-
                                     move_lines.append(move_line)
-                                
-                                    
-                                
-                                
-                                
-                                
                     if expense.amount_balance < 0:
                         move_line = (0,0, {
                                     'name'          : _('Negative Balance'),
@@ -1335,7 +1190,6 @@ class tms_expense_invoice(osv.osv_memory):
                                 _('There is no address created for this driver or there is no payable account defined for: "%s" (id:%d)') % \
                                     (line.employee_id.name, line.employee_id.id,))
                         b = account_fiscal_obj.map_account(cr, uid, False, b)
-                        
                         move_line = (0,0, {
                                     'name'          : _('Positive Balance'),
                                     'ref'           : expense.name,
@@ -1349,7 +1203,6 @@ class tms_expense_invoice(osv.osv_memory):
                                     'partner_id'    : expense.employee_id.address_home_id.id,
                                     })
                         notes += '\n' + _('Credit Balance')
-                                            
                     move_lines.append(move_line)
                     move = {
                         'ref'               : expense.name,
@@ -1360,26 +1213,18 @@ class tms_expense_invoice(osv.osv_memory):
                         'period_id'         : period_id[0],
                         }
                     move_id = move_obj.create(cr, uid, move)
-                    
                     if move_id:
                         move_obj.button_validate(cr, uid, [move_id])
-
                     expense_obj.write(cr,uid,[expense.id], {'move_id': move_id, 'state':'confirmed', 'confirmed_by':uid, 'date_confirmed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
-                    
                     res = self.reconcile_supplier_invoices(cr, uid, move_id, invoice_ids, context)
-
-
-
         return True
-    
+
     def reconcile_supplier_invoices(self, cr, uid, move_id, invoice_ids, context=None):
         if context is None:
             context = {}
         move_line_obj = self.pool.get('account.move.line')
-
         for invoice in self.pool.get('account.invoice').browse(cr, uid, invoice_ids):
             xid = '%s' % (invoice.id)
-
             res = move_line_obj.search(cr, uid, [('move_id','=',move_id),('name','ilike',xid)])
             if not res:
                 raise osv.except_osv('Error !',
@@ -1403,12 +1248,10 @@ class tms_expense_invoice(osv.osv_memory):
                         #print "xline.partner_id: (%s) %s" % (xline.partner_id.id, xline.partner_id.name)
                         #print "xline.invoice.number: ", xline.invoice.number if xline.invoice else ''
                         #print "xline.invoice.supplier_invoice_number: ", xline.invoice.supplier_invoice_number if xline.invoice else ''
-                        #print "xline.invoice.id: ", xline.invoice.id if xline.invoice else ''
-                        
+                        #print "xline.invoice.id: ", xline.invoice.id if xline.invoice else ''                        
                     res2 = move_line_obj.reconcile(cr, uid, lines, context=context)
         return
-        
-    
+
     def create_supplier_invoice(self, cr, uid, line, context=None):
         invoice_obj = self.pool.get('account.invoice')
         invoice_tax_obj = self.pool.get('account.invoice.tax')
@@ -1449,13 +1292,9 @@ class tms_expense_invoice(osv.osv_memory):
             'employee_id'           : line.expense_id.employee_id.id,
             'sale_shop_id'          : line.expense_id.shop_id.id,
             })
-        
         #print "Subtotal Factura: ", round(line.price_subtotal / line.product_uom_qty, 4)
-
         notes = line.expense_id.name + ' - ' + line.product_id.name
-
         a = line.partner_id.property_account_payable.id
-
         inv = {
             'supplier_invoice_number' : line.invoice_number,
             'name'              : line.expense_id.name + ' - ' + line.invoice_number,
@@ -1483,6 +1322,3 @@ class tms_expense_invoice(osv.osv_memory):
         wf_service.trg_validate(uid, 'account.invoice', inv_id, 'invoice_open', cr)
         res = expense_line_obj.write(cr, uid, [line.id], {'invoice_id':inv_id})
         return inv_id
- 
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

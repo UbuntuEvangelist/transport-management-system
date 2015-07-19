@@ -19,19 +19,16 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from openerp.osv import osv, fields
 import time
-from datetime import datetime, date
+from datetime import datetime
 from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import decimal_precision as dp
-import netsvc
-import openerp
 
 
 class tms_expense_line(osv.osv):
     _inherit = 'tms.expense.line'
-    
     _columns = {
               'loan_id' : fields.many2one('tms.expense.loan', 'Loan', required=False),
               }
@@ -41,7 +38,6 @@ class tms_expense_loan(osv.osv):
     _name = 'tms.expense.loan'
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _description = 'TMS Driver Loan Mgmnt'
-
 
     def _balance(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -53,7 +49,7 @@ class tms_expense_loan(osv.osv):
                             'paid'    : not (record.amount + data[0]) > 0,
                     }            
         return res
-        
+
     def _get_loan_discounts_from_expense_lines(self, cr, uid, ids, context=None):
         expense_line = {}
         for line in self.pool.get('tms.expense.line').browse(cr, uid, ids, context=context):           
@@ -64,7 +60,6 @@ class tms_expense_loan(osv.osv):
             expense_line_ids = self.pool.get('tms.expense.loan').search(cr, uid, [('id','in',expense_line.keys())], context=context)
         return expense_line_ids
 
-    
     _columns = {
         'name'        : fields.char('Name', size=64, select=True, readonly=True),
         'description' : fields.char('Description', size=128, select=True, required=True, readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]}),
@@ -90,7 +85,6 @@ class tms_expense_loan(osv.osv):
 - Fortnightly: Discount will be applied forthnightly, considering only 2 discounts in each month, applied the 14th and 28th day of the month.
 - Monthy: Discount will be applied only once a month, applied the 28th day of the month.                                . 
                                 """, select=True, required=True),
-
         'discount_type' : fields.selection([
                                 ('fixed', 'Fixed'),
                                 ('percent', 'Loan Percentage'),
@@ -100,12 +94,9 @@ class tms_expense_loan(osv.osv):
 - Fixed: Discount will a fixed amount
 - Percent: Discount will be a percentage of total Loan Amount
                                 """, select=True),
-
-    
         'notes'         : fields.text('Notes'),
         'origin'        : fields.char('Source Document', size=64, help="Reference of the document that generated this Expense Record",
                                     readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]}),
-        
         'amount'        : fields.float('Amount', digits_compute=dp.get_precision('Sale Price'), required=True,
                                      readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]}),
         'percent_discount' : fields.float('Percent (%)', digits_compute=dp.get_precision('Sale Price'), required=False,
@@ -113,7 +104,6 @@ class tms_expense_loan(osv.osv):
                                           readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]}),
         'fixed_discount' : fields.float('Fixed Discount', digits_compute=dp.get_precision('Sale Price'), required=False,
                                         readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]}),
-
         'balance'       : fields.function(_balance, method=True, digits_compute=dp.get_precision('Sale Price'), string='Balance', type='float', multi=True,
                                           store={
                                                  'tms.expense.loan': (lambda self, cr, uid, ids, c={}: ids, ['notes', 'amount','state','expense_line_ids'], 10),
@@ -126,12 +116,10 @@ class tms_expense_loan(osv.osv):
                                                  'tms.expense.line': (_get_loan_discounts_from_expense_lines, ['product_uom_qty', 'price_unit'], 10),
                                                  }),
                                         #store = {'tms.expense.line': (_get_loan_discounts_from_expense_lines, None, 50)}),
-
         'product_id'    : fields.many2one('product.product', 'Discount Product', readonly=True, states={'draft':[('readonly',False)], 'approved':[('readonly',False)]},
                                           required=True, domain=[('tms_category', '=', ('salary_discount'))], ondelete='restrict'),
         'shop_id'       : fields.related('employee_id', 'shop_id', type='many2one', relation='sale.shop', string='Shop', store=True, readonly=True),
         'company_id'    : fields.related('shop_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
-        
         'create_uid'    : fields.many2one('res.users', 'Created by', readonly=True),
         'create_date'   : fields.datetime('Creation Date', readonly=True, select=True),
         'cancelled_by'  : fields.many2one('res.users', 'Cancelled by', readonly=True),
@@ -142,13 +130,12 @@ class tms_expense_loan(osv.osv):
         'date_confirmed': fields.datetime('Date Confirmed', readonly=True),
         'closed_by'     : fields.many2one('res.users', 'Closed by', readonly=True),
         'date_closed'   : fields.datetime('Date Closed', readonly=True),
-    
+
     }
     _defaults = {
         'date'              : lambda *a: time.strftime(DEFAULT_SERVER_DATE_FORMAT),
         'state'             : lambda *a: 'draft',
-    }
-    
+    }    
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Loan record must be unique !'),
     ]
@@ -162,10 +149,8 @@ class tms_expense_loan(osv.osv):
                 seq_number = self.pool.get('ir.sequence').get_id(cr, uid, seq_id)
                 values['name'] = seq_number
             else:
-                raise osv.except_osv(_('Loan Sequence Error !'), _('You have not defined Loan Sequence for shop ' + employee.shop_id.name))
-            
+                raise osv.except_osv(_('Loan Sequence Error !'), _('You have not defined Loan Sequence for shop ' + employee.shop_id.name))            
         return super(tms_expense_loan, self).create(cr, uid, values, context=context)
-
 
     def action_approve(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids, context=context):            
@@ -195,7 +180,6 @@ class tms_expense_loan(osv.osv):
             self.log(cr, uid, id, message)
         return True
 
-    
     def action_close(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids, context=context):
             self.write(cr, uid, ids, {'state':'closed', 'closed_by' : uid, 'date_closed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
@@ -203,7 +187,6 @@ class tms_expense_loan(osv.osv):
                 message = _("Loan '%s' is set to Closed even when it is not paid.") % name if rec.balance > 0.0 else _("Loan '%s' is set to Closed.") % name 
             self.log(cr, uid, id, message)
         return True
-    
 
     def get_loan_discounts(self, cr, uid, employee_id, expense_id, context=None):
         expense_line_obj = self.pool.get('tms.expense.line')
@@ -220,7 +203,6 @@ class tms_expense_loan(osv.osv):
             if len(loan_ids):
                 expense_line_obj.unlink(cr, uid, expense_line_ids)
                 self.write(cr, uid,loan_ids, {'state':'confirmed', 'closed_by' : False, 'date_closed':False} )
-
         prod_obj = self.pool.get('product.product')
         loan_ids = self.search(cr, uid, [('employee_id', '=', employee_id),('state','=','confirmed'),('balance', '>', 0.0)])
         flag_each = True
@@ -261,8 +243,6 @@ class tms_expense_loan(osv.osv):
                         for (id,name) in self.name_get(cr, uid, [rec.id]):                
                             message =  _("Loan '%s' has been Closed.") % rec.name 
                         self.log(cr, uid, id, message)
-            
-            
             elif rec.discount_method == 'each' and flag_each:
                 # Buscaoms el ultimo descuento de prestamo de tipo "En cada liquidacion"
                 cr.execute("""select date from tms_expense_line where loan_id in 
@@ -278,11 +258,9 @@ class tms_expense_loan(osv.osv):
                 cr.execute('select date from tms_expense_line where loan_id = %s order by date desc limit 1' % (rec.id))
                 data = filter(None, map(lambda x:x[0], cr.fetchall()))
                 date = data[0] if data else rec.date
-                
                 #print "fecha_liq: ", fecha_liq
                 dur = datetime.strptime(fecha_liq, '%Y-%m-%d') - datetime.strptime(date, '%Y-%m-%d')
                 product = prod_obj.browse(cr, uid, [rec.product_id.id])[0]
-                
                 balance = rec.balance
                 discount = rec.fixed_discount if rec.discount_type == 'fixed' else rec.amount * rec.percent_discount / 100.0
                 discount = balance if discount > balance else discount
@@ -307,8 +285,4 @@ class tms_expense_loan(osv.osv):
                     for (id,name) in self.name_get(cr, uid, [rec.id]):                
                         message =  _("Loan '%s' has been Closed.") % rec.name 
                     self.log(cr, uid, id, message)
-
         return
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -18,16 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+from openerp.osv import osv, fields
 
-
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
-import time
-from datetime import datetime, date
 
 # Agregamos manejar una secuencia por cada tienda para controlar viajes 
 class sale_shop(osv.osv):
@@ -42,9 +34,6 @@ class sale_shop(osv.osv):
             'tms_fuel_sequence_ids': fields.one2many('tms.sale.shop.fuel.supplier.seq', 'shop_id', 'Fuel Sequence per Supplier'),
         }
 
-sale_shop()
-
-
 # Agregamos el detalle de las secuencias por proveedor de combustible por cada tienda. 
 class tms_sale_shop_fuel_supplier_seq(osv.osv):
     _name = "tms.sale.shop.fuel.supplier.seq"
@@ -55,16 +44,7 @@ class tms_sale_shop_fuel_supplier_seq(osv.osv):
             'partner_id': fields.many2one('res.partner', 'Fuel Supplier', required=True),
             'fuel_sequence': fields.many2one('ir.sequence', 'Fuel Sequence', required=True),
             }
-    
+
     _sql_constraints = [
         ('tms_shop_fuel_supplier', 'unique(shop_id, partner_id)', 'Partner must be unique !'),
         ]
-    
-
-
-tms_sale_shop_fuel_supplier_seq()
-
-
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

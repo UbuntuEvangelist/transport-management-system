@@ -22,19 +22,13 @@
 
 from osv import osv, fields
 import netsvc
-import pooler
 from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
+from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import decimal_precision as dp
-from osv.orm import browse_record, browse_null
 import time
-from datetime import datetime, date
-
-import openerp
 
 
 # Trip Fuel Vouchers
-
 class tms_fuelvoucher(osv.osv):
     _name ='tms.fuelvoucher'
     _inherit = ['mail.thread', 'ir.needaction_mixin']
@@ -42,7 +36,6 @@ class tms_fuelvoucher(osv.osv):
 
     def _invoiced(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        invoiced = paid = name = False
         for record in self.browse(cr, uid, ids, context=context):
             res[record.id] =  { 'invoiced': bool(record.invoice_id and record.invoice_id.state !='cancel'),
                                 'invoice_paid': bool(record.invoice_id and record.invoice_id.state =='paid'),
@@ -55,17 +48,15 @@ class tms_fuelvoucher(osv.osv):
         for record in self.browse(cr, uid, ids, context=context):        
             tax_factor = 0.00
             for line in record.product_id.supplier_taxes_id:
-                tax_factor = (tax_factor + line.amount) if line.amount <> 0.0 else tax_factor
+                tax_factor = (tax_factor + line.amount) if line.amount != 0.0 else tax_factor
             if (record.tax_amount) and tax_factor == 0.00:
                 raise osv.except_osv(_('No taxes defined in product !'), _('You have to add taxes for this product. Para Mexico: Tiene que agregar el IVA que corresponda y el IEPS con factor 0.0.'))
-            
             if record.partner_id.tms_fuel_internal:
                 price_total = subtotal = record.product_uom_qty * record.product_id.standard_price
                 special_tax_amount = 0
-                price_unit = record.product_id.standard_price
-                
+                price_unit = record.product_id.standard_price                
             else:
-                subtotal = (record.tax_amount / tax_factor) if tax_factor <> 0.0 else record.price_total
+                subtotal = (record.tax_amount / tax_factor) if tax_factor != 0.0 else record.price_total
                 special_tax_amount = (record.price_total - subtotal - record.tax_amount) if tax_factor else 0.0
                 price_unit = subtotal / (record.product_uom_qty or 1.0)
                 price_total = record.price_total
@@ -82,13 +73,12 @@ class tms_fuelvoucher(osv.osv):
             for fuelvoucher in invoice.fuelvoucher_ids:
                 result[fuelvoucher.id] = True        
         return result.keys()    
-    
+
     _columns = {
-        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
+        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel': [('readonly',True)], 'confirmed': ('readonly',True)], 'closed': [('readonly',True)]}),
         'name'          : fields.char('Fuel Voucher', size=64, required=False),
         'state'         : fields.selection([('draft','Draft'), ('approved','Approved'), ('confirmed','Confirmed'), ('closed','Closed'), ('cancel','Cancelled')], 'State', readonly=True),
-        'date'          : fields.date('Date', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}, required=True),
-        
+        'date'          : fields.date('Date', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}, required=True),        
         'employee1_id'  : fields.related('travel_id', 'employee_id', type='many2one', relation='hr.employee', string='Driver', store=True, readonly=True),
         'employee2_id'  : fields.related('travel_id', 'employee2_id', type='many2one', relation='hr.employee', string='Driver Helper', store=True, readonly=True),
         'employee_id'   : fields.many2one('hr.employee', 'Driver', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]},required=False),
@@ -106,7 +96,6 @@ class tms_fuelvoucher(osv.osv):
         'special_tax_amount' : fields.function(_amount_calculation, method=True, string='IEPS', type='float', digits_compute= dp.get_precision('Sale Price'), multi='price_unit', store=True),
         'price_total'   : fields.float('Total', required=True, digits_compute= dp.get_precision('Sale Price'), states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
         'notes'         : fields.text('Notes', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
-
         'create_uid'    : fields.many2one('res.users', 'Created by', readonly=True),
         'create_date'   : fields.datetime('Creation Date', readonly=True, select=True),        
         'cancelled_by'  : fields.many2one('res.users', 'Cancelled by', readonly=True),
@@ -141,21 +130,19 @@ class tms_fuelvoucher(osv.osv):
         'picking_id_cancel' : fields.many2one('stock.picking.in', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
         'driver_helper' : fields.boolean('For Driver Helper', help="Check this if you want to give this Fuel Voucher to Driver Helper.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
         'no_travel'     : fields.boolean('No Travel', help="Check this if you want to create Fuel Voucher with no Travel.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
-
         }
-    
+
     _defaults = {
         'date': lambda *a: time.strftime(DEFAULT_SERVER_DATE_FORMAT),
         'state': 'draft',
         'currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         }
-    
+
     _sql_constraints = [
         ('name_uniq', 'unique(partner_id,name)', 'Fuel Voucher number must be unique !'),
         ]
     _order = "name desc, date desc"
 
-    
     def _check_driver(self, cr, uid, ids, context=None):         
         for record in self.browse(cr, uid, ids, context=context):            
             if not record.no_travel and record.driver_helper and not record.travel_id.employee2_id.id==record.employee_id.id:
@@ -167,7 +154,6 @@ class tms_fuelvoucher(osv.osv):
     _constraints = [
         (_check_driver, 'You can not create Fuel Voucher with Driver not in Travel Record.', ['employee_id']),
     ]
-    
 
     def on_change_product_id(self, cr, uid, ids, product_id):
         res = {}
@@ -179,15 +165,12 @@ class tms_fuelvoucher(osv.osv):
     def on_change_no_travel(self, cr, uid, ids, no_travel):
         return no_travel and {'value': {'travel_id' : False, 'unit_id':False, 'employee_id':False}} or {}
 
-    
     def on_change_driver_helper(self, cr, uid, ids, driver_helper, employee1_id, employee2_id):
         return {'value': {'employee_id' : employee2_id,}} if driver_helper else {'value': {'employee_id' : employee1_id,}}
-        
-    
+
     def on_change_driver(self, cr, uid, ids, employee_id, employee1_id, employee2_id):
         return {'value': {'driver_helper' : (employee_id == employee2_id),}}
 
-    
     def on_change_travel_id(self, cr, uid, ids, travel_id):
         res = {}
         if not travel_id:
@@ -209,8 +192,6 @@ class tms_fuelvoucher(osv.osv):
                           }
                 }
 
-    
-
     def on_change_amount(self, cr, uid, ids, product_uom_qty, price_total, tax_amount, product_id):
         res = {'value': {'price_unit': 0.0, 'price_subtotal': 0.0, 'special_tax_amount': 0.0}}
         if not (product_uom_qty and price_total and product_id):
@@ -218,13 +199,13 @@ class tms_fuelvoucher(osv.osv):
         tax_factor = 0.00
         prod_obj = self.pool.get('product.product')
         for line in prod_obj.browse(cr, uid, [product_id], context=None)[0].supplier_taxes_id:
-            tax_factor = (tax_factor + line.amount) if line.amount <> 0.0 else tax_factor
+            tax_factor = (tax_factor + line.amount) if line.amount != 0.0 else tax_factor
         if (tax_amount) and tax_factor == 0.00:
             raise osv.except_osv(_('No taxes defined in product !'), _('You have to add taxes for this product. Para Mexico: Tiene que agregar el IVA que corresponda y el IEPS con factor 0.0.'))        
-        subtotal = (tax_amount / tax_factor) if tax_factor <> 0.0 else price_total
+        subtotal = (tax_amount / tax_factor) if tax_factor != 0.0 else price_total
         special_tax = (price_total - subtotal - tax_amount) if tax_factor else 0.0
         return {'value': {'price_unit': (subtotal / product_uom_qty), 'price_subtotal': subtotal, 'special_tax_amount': special_tax}}
-                
+
     def create(self, cr, uid, vals, context=None):
         'travel_id' in vals and vals['travel_id'] and \
         'no_travel' in vals and vals['no_travel'] and vals.pop('travel_id')
@@ -246,9 +227,8 @@ class tms_fuelvoucher(osv.osv):
             seq_number = self.pool.get('ir.sequence').get_id(cr, uid, seq_id)
             vals['name'] = seq_number
         else:
-            raise osv.except_osv(_('Fuel Voucher Sequence Error !'), _('You have not defined Fuel Voucher Sequence for shop ' + shop.name))
+            raise osv.except_osv(_('Fuel Voucher Sequence Error !'), _('You have not defined Fuel Voucher Sequence for shop ' + shop_id.name))
         return super(tms_fuelvoucher, self).create(cr, uid, vals, context=context)
-
 
     def write(self, cr, uid, ids, vals, context=None):
         if 'no_travel' in vals:
@@ -262,9 +242,8 @@ class tms_fuelvoucher(osv.osv):
             if 'travel_id' in vals:
                 travel = self.pool.get('tms.travel').browse(cr, uid, ids, vals['travel_id'])
                 vals.update({'shop_id': travel.shop_id.id, 'unit_id': travel.unit_id.id}) 
-        return super(tms_fuelvoucher, self).write(cr, uid, ids, vals, context=context)
-    
-    
+        return super(tms_fuelvoucher, self).write(cr, uid, ids, vals, context=context)    
+
     def action_cancel_draft(self, cr, uid, ids, *args):
         if not len(ids):
             return False
@@ -280,7 +259,7 @@ class tms_fuelvoucher(osv.osv):
             else:
                 self.write(cr, uid, ids, {'state':'draft','drafted_by':uid,'date_drafted':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
         return True
-    
+
     def action_cancel(self, cr, uid, ids, context=None):
         for fuelvoucher in self.browse(cr, uid, ids, context=context):
             move_id = fuelvoucher.move_id.id
@@ -292,27 +271,22 @@ class tms_fuelvoucher(osv.osv):
                 raise osv.except_osv(
                         _('Could not cancel Fuel Voucher !'),
                         _('This Fuel Voucher is already linked to Travel Expenses record'))
-                
             elif move_id:
                 move_obj = self.pool.get('account.move')
                 if fuelvoucher.move_id.state != 'draft':
                     move_obj.button_cancel(cr, uid, [fuelvoucher.move_id.id]) 
                 self.write(cr, uid, ids, {'state':'cancel', 'invoice_id':False, 'move_id': False, 'picking_id': False, 'cancelled_by':uid,'date_cancelled':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
                 #move_obj.unlink(cr, uid, [move_id])
-
             elif fuelvoucher.picking_id and fuelvoucher.picking_id.id:                
                 picking_id = self.create_picking(cr, uid, fuelvoucher, 'return', fuelvoucher.picking_id.id)
                 self.write(cr,uid,ids,{'picking_id_cancel': picking_id})                
             self.write(cr, uid, ids, {'state':'cancel', 'invoice_id':False, 'move_id': False, 'cancelled_by':uid,'date_cancelled':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
             if move_id:
-                move_obj.unlink(cr, uid, [move_id])
-            
+                move_obj.unlink(cr, uid, [move_id])            
         return True
 
-    
     def create_picking(self, cr, uid, fuelvoucher, picking_type, source_picking_id, context=None):
         picking_obj = self.pool.get('stock.picking')
-    
         move = (0, 0, {
                 'date'              : fuelvoucher.date if picking_type=='out' else time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
                 'date_expected'     : fuelvoucher.date if picking_type=='out' else time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
@@ -331,7 +305,6 @@ class tms_fuelvoucher(osv.osv):
                 'employee_id'       : fuelvoucher.employee_id.id,
                 'fuelvoucher_id'    : fuelvoucher.id,
                 })
-
         last_pick_name = picking_obj.read(cr, uid, [source_picking_id], ['name'])[0]['name'] if picking_type !='out' else ''
         new_pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking')
         name = new_pick_name if picking_type=='out' else _('%s-%s-Ret') % (new_pick_name,last_pick_name )
@@ -345,8 +318,6 @@ class tms_fuelvoucher(osv.osv):
                 'type'              : 'internal',
                 'invoice_state'     : 'none',
                 }
-
-        
         picking_id = picking_obj.create(cr, uid, picking)
         if picking_id:
             wf_service = netsvc.LocalService("workflow")
@@ -360,7 +331,7 @@ class tms_fuelvoucher(osv.osv):
             raise osv.except_osv(_('Error !'),
                     _('Could not create Picking for Fuel Voucher %s') % (fuelvoucher.name,))
         return picking_id
-    
+
     def action_approve(self, cr, uid, ids, context=None):
         for fuelvoucher in self.browse(cr, uid, ids, context=context):
             if fuelvoucher.state in ('draft'):
@@ -373,7 +344,6 @@ class tms_fuelvoucher(osv.osv):
                  raise osv.except_osv(
                         _('Could not confirm Fuel Voucher !'),
                         _('Product quantity must be greater than zero.'))
-            
             elif fuelvoucher.partner_id.tms_category == 'fuel' and fuelvoucher.partner_id.tms_fuel_internal:
                 if fuelvoucher.product_id.qty_available < fuelvoucher.product_uom_qty:
                     raise osv.except_osv(_('Warning !'),
@@ -381,25 +351,19 @@ class tms_fuelvoucher(osv.osv):
                 picking_id = self.create_picking(cr, uid, fuelvoucher, 'out', 'False')
                 self.write(cr,uid,ids,{'picking_id': picking_id, 'price_total': fuelvoucher.product_id.standard_price * fuelvoucher.product_uom_qty, 'state':'confirmed', 'confirmed_by':uid, 'date_confirmed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
             else:
-            
                 move_obj = self.pool.get('account.move')
                 period_obj = self.pool.get('account.period')
                 account_jrnl_obj=self.pool.get('account.journal')
-                
                 period_id = period_obj.search(cr, uid, [('date_start', '<=', fuelvoucher.date),('date_stop','>=', fuelvoucher.date), ('state','=','draft')], context=None)
-                
                 if not period_id:
                     raise osv.except_osv(_('Warning !'),
                             _('There is no valid account period for this date %s. Period does not exists or is already closed') % \
                                     (fuelvoucher.date,))
-                
                 journal_id = account_jrnl_obj.search(cr, uid, [('type', '=', 'general'),('tms_fuelvoucher_journal','=', 1)], context=None)
                 if not journal_id:
                     raise osv.except_osv('Error !',
                                      'You have not defined Fuel Voucher Journal...')
                 journal_id = journal_id and journal_id[0]
-                
-                
                 move_lines = []
                 precision = self.pool.get('decimal.precision').precision_get(cr, uid, 'Account')
                 notes = _("Fuel Voucher: %s\nTravel: %s\nDriver: (ID %s) %s\nVehicle: %s") % \
@@ -408,12 +372,9 @@ class tms_fuelvoucher(osv.osv):
                          fuelvoucher.travel_id.employee_id and fuelvoucher.travel_id.employee_id.name or 'N/A', 
                          fuelvoucher.travel_id and fuelvoucher.travel_id.unit_id and fuelvoucher.travel_id.unit_id.name or fuelvoucher.unit_id.name)
                 ##print "notes: ", notes
-                
-                
                 if not (fuelvoucher.product_id.property_account_expense.id if fuelvoucher.product_id.property_account_expense.id else fuelvoucher.product_id.categ_id.property_account_expense_categ.id if fuelvoucher.product_id.categ_id.property_account_expense_categ.id else False):
                     raise osv.except_osv(_('Missing configuration !!!'),
                                      _('You have not defined expense Account for Product %s...') % (fuelvoucher.product_id.name))
-    
                 move_line = (0,0, {
                                     'name'          : _('Fuel Voucher: %s') % (fuelvoucher.name),
                                     'account_id'    : fuelvoucher.product_id.property_account_expense.id if fuelvoucher.product_id.property_account_expense.id else fuelvoucher.product_id.categ_id.property_account_expense_categ.id,
@@ -429,11 +390,9 @@ class tms_fuelvoucher(osv.osv):
                                     'quantity'      : fuelvoucher.product_uom_qty
                                     })
                 move_lines.append(move_line)
-                
                 if not (fuelvoucher.product_id.tms_property_account_expense.id if fuelvoucher.product_id.tms_property_account_expense.id else fuelvoucher.product_id.categ_id.tms_property_account_expense_categ.id if fuelvoucher.product_id.categ_id.tms_property_account_expense_categ.id else False):
                     raise osv.except_osv(_('Missing configuration !!!'),
                                      _('You have not defined breakdown Account for Product %s...') % (fuelvoucher.product_id.name))
-                    
                 move_line = (0,0, {
                                     'name'          : _('Fuel Voucher: %s') % (fuelvoucher.name),
                                     'account_id'    : fuelvoucher.product_id.tms_property_account_expense.id if fuelvoucher.product_id.tms_property_account_expense.id else fuelvoucher.product_id.categ_id.tms_property_account_expense_categ.id,
@@ -449,7 +408,6 @@ class tms_fuelvoucher(osv.osv):
                                     'quantity'      : fuelvoucher.product_uom_qty                                    
                                     })
                 move_lines.append(move_line)
-    
                 move = {
                         'ref'        : _('Fuel Voucher: %s') % (fuelvoucher.name),
                         'journal_id' : journal_id,
@@ -458,13 +416,10 @@ class tms_fuelvoucher(osv.osv):
                         'date'       : fuelvoucher.date,
                         'period_id'  : period_id[0],
                         }
-                        
                 move_id = move_obj.create(cr, uid, move)
                 if move_id:
                     move_obj.button_validate(cr, uid, [move_id])                            
-    
                 self.write(cr,uid,ids,{'move_id': move_id, 'state':'confirmed', 'confirmed_by':uid, 'date_confirmed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
-        
         return True
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -488,11 +443,7 @@ class tms_fuelvoucher(osv.osv):
         })
         return super(tms_fuelvoucher, self).copy(cr, uid, id, default, context)
 
-
-tms_fuelvoucher()
-
 # Wizard que permite conciliar los Vales de combustible en una factura
-
 class tms_fuelvoucher_invoice(osv.osv_memory):
 
     """ To create invoice for each Fuel Voucher"""
@@ -501,7 +452,6 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
     _description = 'Make Invoices from Fuel Vouchers'
 
     def makeInvoices(self, cr, uid, ids, context=None):
-
         """
              To get Fuel Voucher and create Invoice
              @param self: The object pointer.
@@ -510,10 +460,8 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
              @param context: A standard dictionary
              @return : retrun view of Invoice
         """
-
         if context is None:
             context={}
-
         record_ids =  context.get('active_ids',[])
         if record_ids:
             res = False
@@ -525,24 +473,18 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
             account_jrnl_obj=self.pool.get('account.journal')
             invoice_obj=self.pool.get('account.invoice')
             fuelvoucher_obj=self.pool.get('tms.fuelvoucher')
-
             journal_id = account_jrnl_obj.search(cr, uid, [('type', '=', 'purchase'),('tms_expense_suppliers_journal', '=', 1)], context=None)
             journal_id = journal_id and journal_id[0] or False
-
             cr.execute("select distinct partner_id, currency_id from tms_fuelvoucher where (invoice_id is null or invoice_id=(select ai.id from account_invoice ai where ai.id=invoice_id and state = 'cancel')) and state in ('confirmed', 'closed') and id IN %s",(tuple(record_ids),))
-
             data_ids = cr.fetchall()
             if not len(data_ids):
                 raise osv.except_osv(_('Warning !'),
                                  _('Selected records are not Confirmed or already invoiced...'))
             #print data_ids
-
             for data in data_ids:
                 partner = partner_obj.browse(cr,uid,data[0])
-
                 cr.execute("select id from tms_fuelvoucher where (invoice_id is null or invoice_id=(select ai.id from account_invoice ai where ai.id=invoice_id and state = 'cancel')) and state in ('confirmed', 'closed') and partner_id=" + str(data[0]) + ' and currency_id=' + str(data[1]) + " and id IN %s", (tuple(record_ids),))
                 fuelvoucher_ids = filter(None, map(lambda x:x[0], cr.fetchall()))
-                
                 inv_lines = []
                 notes = "Conciliacion de Vales de Combustible. "
                 for line in fuelvoucher_obj.browse(cr,uid,fuelvoucher_ids):
@@ -560,7 +502,6 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
                             a = property_obj.get(cr, uid,
                                     'property_account_expense_categ', 'product.category',
                                     context=context).id
-
                     a = account_fiscal_obj.map_account(cr, uid, False, a)
                     #print "line.price_unit: ", line.price_unit
                     inv_line = (0,0, {
@@ -580,15 +521,12 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
                         })
                     #print "inv_line: ", inv_line
                     inv_lines.append(inv_line)
-                
                     notes += '\n' + line.name
-
                 a = partner.property_account_payable.id
                 if partner and partner.property_payment_term.id:
                     pay_term = partner.property_payment_term.id
                 else:
                     pay_term = False
-
                 inv = {
                     'name'              : _('Fuel Vouchers Invoice'),
                     'origin'            : _('Invoice from Fuel Vouchers'),
@@ -606,14 +544,9 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
                     'fiscal_position'   : partner.property_account_position.id,
                     'comment'           : notes,
                 }
-
-
-
                 inv_id = invoice_obj.create(cr, uid, inv)
                 invoices.append(inv_id)
-
                 fuelvoucher_obj.write(cr,uid,fuelvoucher_ids, {'invoice_id': inv_id})               
-
         return {
             'domain': "[('id','in', ["+','.join(map(str,invoices))+"])]",
             'name': _('Supplier Invoices'),
@@ -624,9 +557,3 @@ class tms_fuelvoucher_invoice(osv.osv_memory):
             'context': "{'type':'in_invoice', 'journal_type': 'purchase'}",
             'type': 'ir.actions.act_window'
         }
-tms_fuelvoucher_invoice()
-
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
