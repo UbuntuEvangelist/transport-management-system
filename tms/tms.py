@@ -21,9 +21,9 @@
 
 
 from openerp.osv import osv, fields
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATETIME_FORMAT
-import decimal_precision as dp
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
+import openerp.addons.decimal_precision as dp
 import time
 import simplejson as json
 import urllib as my_urllib

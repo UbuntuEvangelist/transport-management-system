@@ -20,7 +20,7 @@
 ##############################################################################
 from openerp.osv import osv, fields
 import time
-from tools import DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 
 
 # Events category

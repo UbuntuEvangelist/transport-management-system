@@ -21,10 +21,10 @@
 
 from openerp.osv import osv, fields
 import time
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
-import decimal_precision as dp
-import netsvc
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import openerp.addons.decimal_precision as dp
+from openerp import netsvc
 
 
 # TMS Travel Expenses
@@ -779,7 +779,7 @@ class tms_expense_line(osv.osv):
         'product_uom'       : fields.many2one('product.uom', 'Unit of Measure '),
         'notes'             : fields.text('Notes'),
         'employee_id'       : fields.related('expense_id', 'employee_id', type='many2one', relation='hr.employee', store=True, string='Driver'),
-        'shop_id'           : fields.related('expense_id', 'shop_id', type='many2one', relation='sale.shop', string='Shop', store=True, readonly=True),
+        'shop_id'           : fields.many2one('sale.shop', string='Shop'),
         'company_id'        : fields.related('expense_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'date'              : fields.related('expense_id', 'date', string='Date', type='date', store=True, readonly=True),
         'state'             : fields.related('expense_id', 'state', string='State', type='char', size=64, store=True, readonly=True),

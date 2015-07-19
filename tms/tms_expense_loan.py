@@ -22,9 +22,9 @@
 from openerp.osv import osv, fields
 import time
 from datetime import datetime
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
-import decimal_precision as dp
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import openerp.addons.decimal_precision as dp
 
 
 class tms_expense_line(osv.osv):

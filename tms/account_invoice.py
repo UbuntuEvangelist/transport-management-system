@@ -23,7 +23,8 @@
 
 
 from openerp.osv import osv, fields
-from tools.translate import _
+from openerp.tools.translate import _
+import openerp.addons.decimal_precision as dp
 
 class account_invoice(osv.osv):
     _inherit ='account.invoice'
@@ -74,7 +75,7 @@ class account_invoice(osv.osv):
         'vehicle_id': fields.many2one('fleet.vehicle', 'Vehicle', readonly=True, required=False),
         'employee_id': fields.many2one('hr.employee', 'Driver', readonly=True, required=False),
         'waybill_shipped_ids': fields.one2many('tms.waybill.shipped_grouped', 'invoice_id', 'Group Shipped Qty by Product', readonly=True, required=False),
-        'product'       : fields.function(_get_waybill_info, string='Product',  type='char',  size='128', multi=True, method=True),
+#        'product'       : fields.function(_get_waybill_info, string='Product',  type='char',  size='128', multi=True, method=True),
         'waybill_rate'  : fields.function(_get_waybill_info, string='Waybill Rate', type='float', digits_compute= dp.get_precision('Sale Price'),  multi=True, method=True),
         'departure_id'  : fields.function(_get_waybill_info, string='Departure', type='many2one', relation='tms.place',  multi=True, method=True),
         'arrival_id'    : fields.function(_get_waybill_info, string='Arrival', type='many2one', relation='tms.place',  multi=True, method=True),

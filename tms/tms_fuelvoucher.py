@@ -20,11 +20,11 @@
 ##############################################################################
 
 
-from osv import osv, fields
-import netsvc
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
-import decimal_precision as dp
+from openerp.osv import osv, fields
+from openerp import netsvc
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import openerp.addons.decimal_precision as dp
 import time
 
 
@@ -75,7 +75,7 @@ class tms_fuelvoucher(osv.osv):
         return result.keys()    
 
     _columns = {
-        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel': [('readonly',True)], 'confirmed': ('readonly',True)], 'closed': [('readonly',True)]}),
+        'operation_id'  : fields.many2one('tms.operation', 'Operation', ondelete='restrict', required=False, readonly=False, states={'cancel': [('readonly', True)], 'confirmed': [('readonly', True)], 'closed': [('readonly', True)]}),
         'name'          : fields.char('Fuel Voucher', size=64, required=False),
         'state'         : fields.selection([('draft','Draft'), ('approved','Approved'), ('confirmed','Confirmed'), ('closed','Closed'), ('cancel','Cancelled')], 'State', readonly=True),
         'date'          : fields.date('Date', states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}, required=True),        
@@ -126,8 +126,8 @@ class tms_fuelvoucher(osv.osv):
                                         ),
         'currency_id'   : fields.many2one('res.currency', 'Currency', required=True, states={'cancel':[('readonly',True)], 'confirmed':[('readonly',True)],'closed':[('readonly',True)]}),
         'move_id'       : fields.many2one('account.move', 'Account Move', required=False, readonly=True, ondelete='restrict'),
-        'picking_id'    : fields.many2one('stock.picking.out', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
-        'picking_id_cancel' : fields.many2one('stock.picking.in', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
+        'picking_id'    : fields.many2one('stock.picking', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
+        #'picking_id_cancel' : fields.many2one('stock.picking.in', 'Stock Picking', required=False, readonly=True, ondelete='restrict'),
         'driver_helper' : fields.boolean('For Driver Helper', help="Check this if you want to give this Fuel Voucher to Driver Helper.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
         'no_travel'     : fields.boolean('No Travel', help="Check this if you want to create Fuel Voucher with no Travel.", states={'cancel':[('readonly',True)], 'approved':[('readonly',True)], 'confirmed':[('readonly',True)], 'closed':[('readonly',True)]}),
         }

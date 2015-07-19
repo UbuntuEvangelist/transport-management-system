@@ -20,7 +20,7 @@
 ##############################################################################
 
 from openerp.osv import osv, fields
-from tools.translate import _
+from openerp.tools.translate import _
 
 
 # Products => We need flags for some process with TMS Module
@@ -169,18 +169,12 @@ class product_category(osv.osv):
     _inherit = "product.category"
     
     _columns = {
-        'tms_property_account_income_categ': fields.property(
+        'tms_property_account_income_categ': fields.many2one(
             'account.account',
-            type='many2one',
-            relation='account.account',
             string="Breakdown Income Account",
-            view_load=True,
             help="Use this to define breakdown income account per vehicle for Freights, Moves, Insurance, etc."),
-        'tms_property_account_expense_categ': fields.property(
-            'account.account',  
-            type='many2one',
-            relation='account.account',
+        'tms_property_account_expense_categ': fields.many2one(
+            'account.account',
             string="Breakdown Expense Account",
-            view_load=True,
             help="Use this to define breakdown expense account per vehicle for Fuel, Travel Expenses, etc."),
     }

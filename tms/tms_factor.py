@@ -21,9 +21,9 @@
 
 from openerp.osv import osv, fields
 import time
-import decimal_precision as dp
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT
+import openerp.addons.decimal_precision as dp
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT
 
 
 # Extra data fields for Waybills & Agreement
