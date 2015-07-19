@@ -22,24 +22,22 @@
 #
 ##############################################################################
 
-import ir_sequence
-import product
-import account
-import account_invoice
-import partner
-import hr
-import sale
-import tms
-import tms_travel
-import tms_fuelvoucher
-import tms_advance
-import tms_waybill
-import tms_expense
-import tms_factor
-import tms_history
-import tms_operation
-import stock
-import tms_expense_loan
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
+from . import ir_sequence
+from . import product
+from . import account
+from . import account_invoice
+from . import partner
+from . import hr
+from . import sale
+from . import tms
+from . import tms_travel
+from . import tms_fuelvoucher
+from . import tms_advance
+from . import tms_waybill
+from . import tms_expense
+from . import tms_factor
+from . import tms_history
+from . import tms_operation
+from . import stock
+from . import tms_expense_loan
+from . import models
