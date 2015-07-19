@@ -57,8 +57,9 @@ It also can manage:
 """,
 
     "data" : [
-        'security/tms_security.xml',
-        'security/ir.model.access.csv',
+#        'security/tms_security.xml',
+        'views/sale_shop_view.xml',
+#        'security/ir.model.access.csv',
         'product_view.xml',
         'ir_config_parameter.xml',
         'ir_sequence_view.xml',
@@ -80,4 +81,3 @@ It also can manage:
     "application": True,
     "installable": True
 }
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

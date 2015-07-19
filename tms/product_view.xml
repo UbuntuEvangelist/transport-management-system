@@ -53,7 +53,7 @@
             <field name="priority">50</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
-                <field name="list_price" position="after">
+                <field name="default_code" position="after">
                     <separator string="TMS" colspan="2"/>
                     <newline />
                     <field name="tms_category" on_change="onchange_tms_category(tms_category)" />
