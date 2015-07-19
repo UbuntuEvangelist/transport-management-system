@@ -3,7 +3,11 @@
 
 <!-- Add fields to product.product object
 'tms_category'
--->                                                                                                                                  
+-->
+############################################################################################################################
+### Cambios en la vista de Product ###                                                                                                                                                                                                                                   
+                                                                                                          
+
         <record id="tms_product_search_form_view" model="ir.ui.view">
             <field name="name">tms.product.search.form</field>
             <field name="model">product.product</field>

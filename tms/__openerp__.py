@@ -28,55 +28,27 @@
     "website"     : "http://www.hesatecnica.com",
     "depends"     : ["hr", "account_voucher", "purchase","sale", "fleet"],
     "summary"     : "Management System for Carriers, Trucking companies and other freight companies",
-    "description" : """
-Freight Management System
-==========================
-
-This application allows you to manage Truckload Freights and Less-than-truckload freight. It also can help Companies such as owner-operators, carriers, brokers and shippers.
-
-It handles full Travel workflow:
-
-Transport Requirement => Waybill => Freight => Delivery
-
-Managing:
-- Driver Cash advance (Payment & Conciliation)
-- Fuel Voucher Management
-- Checking Travel Expenses
-- Freight Invoicing (Trucks of the company or third parties)
-
-It also can manage:
-- Trucks Red Tapes
-- Truck Odometers
-- Events during travel (Example: Arrival delay, Missing Cargo, etc)
-- Kits
-- Places (Linked with Google Maps)
-- Routes (Visible in Google Maps)
-- Easy integration with GPS System
-
-
-""",
-
     "data" : [
 #        'security/tms_security.xml',
         'views/sale_shop_view.xml',
 #        'security/ir.model.access.csv',
-        'product_view.xml',
-        'ir_config_parameter.xml',
-        'ir_sequence_view.xml',
-        'account_view.xml',
-        'hr_view.xml',
-        'partner_view.xml',
-        'sale_view.xml',
-        'tms_view.xml',
-        'tms_travel_view.xml',
-        'tms_advance_view.xml',
-        'tms_fuelvoucher_view.xml',
-        'tms_waybill_view.xml',
-        'tms_expense_view.xml',
-        'tms_factor_view.xml',
-        'tms_history_view.xml',
-        'tms_operation_view.xml',
-        'tms_expense_loan_view.xml',
+        'views/product_view.xml',
+        'views/ir_config_parameter.xml',
+        'views/ir_sequence_view.xml',
+        'views/account_view.xml',
+        'views/hr_view.xml',
+        'views/partner_view.xml',
+        'views/sale_view.xml',
+        'views/tms_view.xml',
+        'views/tms_travel_view.xml',
+        'views/tms_advance_view.xml',
+        'views/tms_fuelvoucher_view.xml',
+        'views/tms_waybill_view.xml',
+        'views/tms_expense_view.xml',
+        'views/tms_factor_view.xml',
+        'views/tms_history_view.xml',
+        'views/tms_operation_view.xml',
+        'views/tms_expense_loan_view.xml',
         ],
     "application": True,
     "installable": True

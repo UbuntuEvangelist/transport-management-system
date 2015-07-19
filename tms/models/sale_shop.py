@@ -11,6 +11,7 @@ class sale_shop(osv.osv):
         'tms_travel_expenses_seq': fields.many2one('ir.sequence', 'Travel Expenses Sequence'),
         'tms_loan_seq': fields.many2one('ir.sequence', 'Loan Sequence'),
         'tms_fuel_sequence_ids': fields.one2many('tms.sale.shop.fuel.supplier.seq', 'shop_id', 'Fuel Sequence per Supplier'),
+        'company_id': fields.many2one('res.company', 'Company', required=False),
     }
     _defaults = {
         'company_id': lambda s, cr, uid, c: s.pool.get('res.company')._company_default_get(cr, uid, 'sale.shop', context=c),
