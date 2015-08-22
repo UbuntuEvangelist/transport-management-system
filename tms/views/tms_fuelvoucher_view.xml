@@ -166,7 +166,7 @@ TMS.FUELVOUCHER
                                     <field name="move_id"/>
                                     <field name="picking_id"/>
                                     <field name="expense_id"/>
-                                    <field name="picking_id_cancel"/>
+                                    <!--field name="picking_id_cancel"/-->
 							        <separator string="Invoice Information" colspan="4"/>
                                     <field name="invoiced"/>  
                                     <field name="invoice_id" />

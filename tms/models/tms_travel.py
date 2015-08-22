@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
 #
@@ -15,38 +15,31 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
+from openerp.osv import osv, fields
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 import time
-from datetime import datetime, date
-import openerp
+from datetime import datetime
 
 
 # Trips / travels
 class tms_travel(osv.osv):
-    _name ='tms.travel'
+    _name = 'tms.travel'
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _description = 'Travels'
-    
-    
+
     def _route_data(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for record in self.browse(cr, uid, ids, context=context):
             res[record.id] = {
                 'distance_route': 0.0,
                 'fuel_efficiency_expected': 0.0,
-            }
-            
+                             }
             distance  = record.route_id.distance
             fuel_efficiency_expected = record.route_id.fuel_efficiency_drive_unit if not record.trailer1_id else record.route_id.fuel_efficiency_1trailer if not record.trailer2_id else record.route_id.fuel_efficiency_2trailer
             res[record.id] = {
@@ -413,21 +406,13 @@ class tms_travel(osv.osv):
                 xdistance = travel.distance_extraction
                 odom_obj.create_odometer_log(cr, uid, False, travel.id, travel.unit_id.id, xdistance)
                 if travel.trailer1_id and travel.trailer1_id.id:
-                    odom_obj.create_odometer_log(cr, uid, False, travel_id, travel.trailer1_id.id, xdistance)
+                    odom_obj.create_odometer_log(cr, uid, False, travel.id, travel.trailer1_id.id, xdistance)
                 if travel.dolly_id and travel.dolly_id.id:
                     odom_obj.create_odometer_log(cr, uid, False, travel.id, travel.dolly_id.id, xdistance)
                 if travel.trailer2_id and travel.trailer2_id.id:
                     odom_obj.create_odometer_log(cr, uid, False, travel.id, travel.trailer2_id.id, xdistance)
-
         self.write(cr,uid,ids,{ 'state':'done',
                                 'ended_by':uid,
                                 'date_ended':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
                                 'date_end_real':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
-
         return True
-
-
-tms_travel()
-
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

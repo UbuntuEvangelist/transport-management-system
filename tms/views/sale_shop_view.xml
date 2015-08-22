@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="view_shop_form" model="ir.ui.view">
+            <field name="name">sale.shop</field>
+            <field name="model">sale.shop</field>
+            <field name="arch" type="xml">
+                <form string="Sales Shop" version="7.0">
+                    <label for="name" class="oe_edit_only"/>
+                    <h1><field name="name"/></h1>
+                    <group name="tms" colspan="4">
+                        <separator colspan="4" string="TMS"/>
+                        <field name="tms_travel_seq" />
+                        <field name="tms_advance_seq"/>
+                        <field name="tms_travel_expenses_seq"/>
+                        <field name="tms_loan_seq"/>                    
+                        <field name="tms_fuel_sequence_ids"  context="{'default_shop_id': active_id}" nolabel="1" colspan="4">
+                            <tree string="Fuel Voucher Sequences" editable="bottom">
+                                <field name="shop_id" invisible="1" />
+                                <field name="fuel_sequence" />
+                                <field name="partner_id" domain="[('supplier','=',1),('tms_category','=','fuel')]" 
+                                                        context="{'default_supplier': 1, 'default_customer': 0, 'default_tms_category': 'fuel'}"/>
+
+                            </tree>
+                            <form string="Fuel Voucher Sequences">
+                                <field name="shop_id" invisible="1" />
+                                <field name="fuel_sequence" />
+                                <field name="partner_id" domain="[('supplier','=',1),('tms_category','=','fuel')]" 
+                                                        context="{'default_supplier': 1, 'default_customer': 0, 'default_tms_category': 'fuel'}"/>
+
+                            </form>                        
+                        </field>
+                    </group>
+                </form>
+           </field>
+        </record>
+        
+        <record id="view_shop_tree" model="ir.ui.view">
+            <field name="name">sale.shop</field>
+            <field name="model">sale.shop</field>
+            <field name="arch" type="xml">
+                <tree string="Sales Shop">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_shop_form" model="ir.actions.act_window">
+            <field name="name">Shop</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">sale.shop</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_shop_tree"/>
+            <field name="help" type="html">
+              <p class="oe_view_nocontent_create">
+                Click to define a new sale shop.
+              </p><p>
+                Each quotation or sales order must be linked to a shop. The
+                shop also defines the warehouse from which the products will be
+                delivered for each particular sales.
+              </p>
+            </field>
+        </record>
+        <menuitem action="action_shop_form" id="menu_action_shop_form" parent="base.menu_base_config" sequence="35"/>
+    </data>
+</openerp>

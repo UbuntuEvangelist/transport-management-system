@@ -20,16 +20,11 @@
 ##############################################################################
 
 
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, float_compare
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
+from openerp.osv import osv, fields
+from openerp.tools.translate import _
+from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
+import openerp.addons.decimal_precision as dp
 import time
-from datetime import datetime, date
-import openerp
 import simplejson as json
 import urllib as my_urllib
 
@@ -107,9 +102,8 @@ class tms_unit_category(osv.osv):
         ('name_uniq', 'unique(name)', 'Category name number must be unique !'),
         ]
 
-
     _order = "sequence"
-    
+
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
         while len(ids):
@@ -134,9 +128,6 @@ class tms_unit_category(osv.osv):
         default['name'] = categ['name'] + ' (copy)'
         return super(tms_unit_category, self).copy(cr, uid, id, default, context=context)
 
-tms_unit_category()
-
-                             
 # Units for Transportation
 class fleet_vehicle(osv.osv):
     _name = 'fleet.vehicle'
@@ -152,7 +143,6 @@ class fleet_vehicle(osv.osv):
             if result and result[0]:
                 res[record.id] = result[0]
         return res
-
 
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=False),
@@ -212,7 +202,6 @@ class fleet_vehicle(osv.osv):
         'odometer_uom': lambda *a : 'distance',
     	}
 
-
     def _check_extra_data_expiry(self, cr, uid, ids, context=None):
         categ_obj = self.pool.get('tms.unit.category')
         expiry_obj = self.pool.get('tms.unit.expiry')
@@ -223,8 +212,6 @@ class fleet_vehicle(osv.osv):
                 if not expiry_obj.search(cr, uid, [('expiry_id', '=', rec.id), ('unit_id', '=', unit_id)]):
                     return False
         return True
-
-            
 
     _constraints = [
         (_check_extra_data_expiry,
@@ -248,7 +235,6 @@ class fleet_vehicle(osv.osv):
         default['unit_photo_ids'] = []
         return super(fleet_vehicle, self).copy(cr, uid, id, default, context=context)
 
-
     def create(self, cr, uid, vals, context=None):
         values = vals
         res = super(fleet_vehicle, self).create(cr, uid, values, context=context)
@@ -266,7 +252,6 @@ class fleet_vehicle(osv.osv):
         odom_obj.action_activate(cr, uid, [odom_id])
         return res
 
-
     def return_action_to_open_tms(self, cr, uid, ids, context=None):
         """ This opens the xml view specified in xml_id for the current vehicle """
         if context is None:
@@ -278,10 +263,6 @@ class fleet_vehicle(osv.osv):
             res['domain'] = [('unit_id','=', ids[0])]
             return res
         return False
-
-
-
-
 
 # Units PHOTOS
 class tms_unit_photo(osv.osv):
@@ -298,10 +279,6 @@ class tms_unit_photo(osv.osv):
         ('name_uniq', 'unique(unit_id,name)', 'Photo name number must be unique for each unit !'),
         ]
 
-
-tms_unit_photo()
-
-
 # Units EXTRA DATA
 class tms_unit_extradata(osv.osv):
     _name = "tms.unit.extradata"
@@ -317,9 +294,6 @@ class tms_unit_extradata(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique(unit_id,extra_data_id)', 'Extra Data Field must be unique for each unit !'),
         ]
-
-tms_unit_extradata()
-
 
 # Units for Transportation EXPIRY EXTRA DATA
 class tms_unit_expiry(osv.osv):
@@ -339,12 +313,6 @@ class tms_unit_expiry(osv.osv):
 
     def on_change_extra_value(self, cr, uid, ids, extra_value):
         return {'value': {'name': extra_value[8:] + '/' + extra_value[5:-3] + '/' + extra_value[:-6]}}
-
-
-tms_unit_expiry()
-
-
-
 
 # Units Kits
 class tms_unit_kit(osv.osv):
@@ -374,7 +342,6 @@ class tms_unit_kit(osv.osv):
     }
 
     def _check_expiration(self, cr, uid, ids, context=None):
-         
         for record in self.browse(cr, uid, ids, context=context):
             date_start = record.date_start
             date_end   = record.date_end
@@ -388,8 +355,6 @@ class tms_unit_kit(osv.osv):
             if len(data):
                 raise osv.except_osv(_('Validity Error !'), _('You cannot have overlaping expiration dates for unit %s !\n' \
                                                                 'This unit is overlaping Kit << %s >>')%(record.unit_id.name, data[0]))
-
-
             if record.dolly_id.id:
                 sql = 'select name from tms_unit_kit where id <> ' + str(record.id) + ' and dolly_id = ' + str(record.dolly_id.id) \
                         + ' and (date_start between \'' + date_start + '\' and \'' + date_end + '\'' \
@@ -400,7 +365,6 @@ class tms_unit_kit(osv.osv):
                 if len(data):
                     raise osv.except_osv(_('Validity Error !'), _('You cannot have overlaping expiration dates for dolly %s !\n' \
                                                                     'This dolly is overlaping Kit << %s >>')%(record.dolly_id.name, data[0]))
-
             sql = 'select name from tms_unit_kit where id <> ' + str(record.id) + ' and (trailer1_id = ' + str(record.trailer1_id.id) + 'or trailer2_id = ' + str(record.trailer1_id.id) + ')' \
                     + ' and (date_start between \'' + date_start + '\' and \'' + date_end + '\'' \
                         + ' or date_end between \'' + date_start + '\' and \'' + date_end + '\');' 
@@ -409,18 +373,15 @@ class tms_unit_kit(osv.osv):
             if len(data):
                 raise osv.except_osv(_('Validity Error !'), _('You cannot have overlaping expiration dates for trailer %s !\n' \
                                                                 'This trailer is overlaping Kit << %s >>')%(record.trailer1_id.name, data[0]))
-
             if record.trailer2_id.id:
                 sql = 'select name from tms_unit_kit where id <> ' + str(record.id) + ' and (trailer1_id = ' + str(record.trailer2_id.id) + 'or trailer2_id = ' + str(record.trailer2_id.id) + ')' \
                         + ' and (date_start between \'' + date_start + '\' and \'' + date_end + '\'' \
                             + ' or date_end between \'' + date_start + '\' and \'' + date_end + '\');' 
-
                 cr.execute(sql)
                 data = filter(None, map(lambda x:x[0], cr.fetchall()))  
                 if len(data):
                     raise osv.except_osv(_('Validity Error !'), _('You cannot have overlaping expiration dates for trailer %s !\n' \
                                                                     'This trailer is overlaping Kit << %s >>')%(record.trailer2_id.name, data[0]))
-
             return True
 
     _constraints = [
@@ -434,7 +395,6 @@ class tms_unit_kit(osv.osv):
         ]
     _order = "name desc, date_start desc"
 
-
     def on_change_tms_unit_id(self, cr, uid, ids, tms_unit_id):
         res = {'value': {'date_start': time.strftime('%Y-%m-%d %H:%M')}}
         if not (tms_unit_id):
@@ -446,14 +406,10 @@ class tms_unit_kit(osv.osv):
         else:
             return {'value': {'date_start': date_start[0]}} 
 
-
     def on_change_active(self, cr, uid, ids, active):
         if active:
             return {}
         return {'value': {'date_end' : time.strftime('%d/%m/%Y %H:%M:%S')}}
-
-
-tms_unit_kit()
 
 #Unit Active / Inactive history
 class tms_unit_active_history(osv.osv):
@@ -477,7 +433,6 @@ class tms_unit_active_history(osv.osv):
         'date_confirmed'    : fields.datetime('Date Confirmed', readonly=True),
         'cancelled_by'      : fields.many2one('res.users', 'Cancelled by', readonly=True),
         'date_cancelled'    : fields.datetime('Date Cancelled', readonly=True),
-
         }
 
     _defaults = {
@@ -513,15 +468,12 @@ class tms_unit_active_history(osv.osv):
         ##print vals
         return super(tms_unit_active_history, self).create(cr, uid, values, context=context)
 
-
-
     def unlink(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids):
             if rec.state == 'confirmed':
                 raise osv.except_osv(
                         _('Warning!'),
                         _('You can not delete a record if is already Confirmed!!! Click Cancel button to continue.'))
-
         super(tms_unit_active_history, self).unlink(cr, uid, ids, context=context)
         return True
 
@@ -534,14 +486,12 @@ class tms_unit_active_history(osv.osv):
         self.write(cr, uid, ids, {'state':'cancel', 'cancelled_by' : uid, 'date_cancelled':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
         return True
 
-
     def action_confirm(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids):
             ##print rec.new_state == 'active'
             self.pool.get('fleet.vehicle').write(cr, uid, [rec.unit_id.id], {'active' : (rec.new_state == 'active')} )
         self.write(cr, uid, ids, {'state':'confirmed', 'confirmed_by' : uid, 'date_confirmed':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
         return True
-
 
 # Unit Red Tape
 class tms_unit_red_tape(osv.osv):
@@ -576,7 +526,6 @@ class tms_unit_red_tape(osv.osv):
         'date_cancelled'    : fields.datetime('Date Cancelled', readonly=True),
         'drafted_by'        : fields.many2one('res.users', 'Drafted by', readonly=True),
         'date_drafted'      : fields.datetime('Date Drafted', readonly=True),
-
         }
 
     _defaults = {
@@ -597,7 +546,6 @@ class tms_unit_red_tape(osv.osv):
                         _('Warning!'),
                         _('You can not create a new record for this unit because theres is already a record for this unit in Draft State.'))
         return super(tms_unit_red_tape, self).create(cr, uid, vals, context=context)
-
 
     def unlink(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids):
@@ -626,7 +574,6 @@ class tms_unit_red_tape(osv.osv):
         self.write(cr, uid, ids, {'state':'draft', 'drafted_by' : uid, 'date_drafted':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
         return True
 
-
     def action_progress(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state':'progress', 'progress_by' : uid, 
                                     'date_progress':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
@@ -634,15 +581,12 @@ class tms_unit_red_tape(osv.osv):
                                     })
         return True
 
-
     def action_done(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state':'done', 'done_by' : uid, 
                                   'date_done':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
                                   'date_end':time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
                                   })
         return True
-
-
 
 # Causes for active / inactive transportation units   
 # Pendiente
@@ -659,7 +603,6 @@ class tms_place(osv.osv):
             res[record.id] = xname
         return res
 
-
     _columns = {
         'company_id'    : fields.many2one('res.company', 'Company', required=False),
         'name'          : fields.char('Place', size=64, required=True, select=True),
@@ -672,7 +615,6 @@ class tms_place(osv.osv):
     }
 
     _rec_name = 'complete_name'
-
 
     def  button_get_coords(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids):
@@ -689,21 +631,17 @@ class tms_place(osv.osv):
                 #print result['status']
         return True
 
-
     def button_open_google(self, cr, uid, ids, context=None):
         for place in self.browse(cr, uid, ids):
             url="/tms/static/src/googlemaps/get_place_from_coords.html?" + str(place.latitude) + ','+ str(place.longitude)
         return { 'type': 'ir.actions.act_url', 'url': url, 'nodestroy': True, 'target': 'new' }
-            
-tms_place()
-
 
 # Routes
 class tms_route(osv.osv):
     _name ='tms.route'
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _description = 'Routes'
-    
+
     _columns = {
         'company_id': fields.many2one('res.company', 'Company', required=False),
         'name' : fields.char('Route Name', size=64, required=True, select=True),
@@ -718,15 +656,12 @@ class tms_route(osv.osv):
         'fuel_efficiency_2trailer': fields.float('Fuel Efficiency Two Trailer', required=False, digits=(14,4)),
         'notes': fields.text('Notes'),
         'active':fields.boolean('Active'),
-
         }
 
     _defaults = {
         'active': True,
     }
-    
-    
-        
+
     def _check_distance(self, cr, uid, ids, context=None):
         return (self.browse(cr, uid, ids, context=context)[0].distance > 0)
 
@@ -739,7 +674,6 @@ class tms_route(osv.osv):
             if rec.departure_id.latitude and rec.departure_id.longitude and rec.arrival_id.latitude and rec.arrival_id.longitude:
                 destinations = ""
                 origins = str(rec.departure_id.latitude) + ',' + str(rec.departure_id.longitude)
-
                 places = [str(x.place_id.latitude) + ',' + str(x.place_id.longitude) for x in rec.places_ids if x.place_id.latitude and x.place_id.longitude]                        
                 #print "places: ", places
                 for place in places:
@@ -778,7 +712,6 @@ class tms_route(osv.osv):
 
         return True
 
-
     def button_open_google(self, cr, uid, ids, context=None):
         for route in self.browse(cr, uid, ids):
             points = str(route.departure_id.latitude) + ','+ str(route.departure_id.longitude) + (',' if len(route.places_ids) else '') +  \
@@ -787,8 +720,6 @@ class tms_route(osv.osv):
             #print points
             url="/tms/static/src/googlemaps/get_route.html?" + points
         return { 'type': 'ir.actions.act_url', 'url': url, 'nodestroy': True, 'target': 'new' }
-    
-tms_route()
 
 class tms_route_place(osv.osv):
     _name ='tms.route.place'
@@ -806,9 +737,6 @@ class tms_route_place(osv.osv):
         'sequence': 10,
     }
 
-
-tms_route_place()
-
 # Route Fuel Efficiency by Motor
 class tms_route_fuelefficiency(osv.osv):
     _name = "tms.route.fuelefficiency"
@@ -825,14 +753,11 @@ class tms_route_fuelefficiency(osv.osv):
         ('route_motor_type_uniq', 'unique(tms_route_id, motor_id, type)', 'Motor + Type must be unique !'),
         ]
 
-tms_route_fuelefficiency()
-
-
 # Routes toll stations
 class tms_route_tollstation(osv.osv):
     _name ='tms.route.tollstation'
     _description = 'Routes toll stations'
-    
+
     _columns = {
         'company_id': fields.many2one('res.company', 'Company', required=False),
         'name' : fields.char('Name', size=64, required=True),
@@ -842,12 +767,10 @@ class tms_route_tollstation(osv.osv):
         'tms_route_ids':fields.many2many('tms.route', 'tms_route_tollstation_route_rel', 'route_id', 'tollstation_id', 'Routes with this Toll Station'),
         'active': fields.boolean('Active'),
     }
-   
+
     _defaults = {
         'active': True,
         }
-    
-tms_route_tollstation()
 
 # Routes toll stations cost per axis
 class tms_route_tollstation_costperaxis(osv.osv):
@@ -861,31 +784,22 @@ class tms_route_tollstation_costperaxis(osv.osv):
         'cost_credit':fields.float('Cost Credit', required=True, digits=(14,4)),
         'cost_cash':fields.float('Cost Cash', required=True, digits=(14,4)),
         }
-    
-tms_route_tollstation_costperaxis()
 
 # Routes toll stations INHERIT for adding cost per axis
 class tms_route_tollstation(osv.osv):
     _inherit ='tms.route.tollstation'
-    
+
     _columns = {
         'tms_route_tollstation_costperaxis_ids' : fields.one2many('tms.route.tollstation.costperaxis', 'tms_route_tollstation_id', 'Toll Cost per Axis', required=True),
         }
-    
-tms_route_tollstation()
-
 
 # Routes INHERIT for adding Toll Stations
 class tms_route(osv.osv):
     _inherit ='tms.route'
-    
+
     _columns = {
         'tms_route_tollstation_ids' : fields.many2many('tms.route.tollstation', 'tms_route_tollstation_route_rel', 'tollstation_id', 'route_id', 'Toll Station in this Route'),
         }
-    
-tms_route()
-
-
 
 # Route Fuel Efficiency by Motor
 class tms_route_fuelefficiency(osv.osv):
@@ -898,20 +812,16 @@ class tms_route_fuelefficiency(osv.osv):
         'type': fields.selection([('tractor','Drive Unit'), ('one_trailer','Single Trailer'), ('two_trailer','Double Trailer')], 'Type', required=True),
         'performance' :fields.float('Performance', required=True, digits=(14,4), help='Fuel Efficiency for this motor type'),
         }
-    
+
     _sql_constraints = [
         ('route_motor_type_uniq', 'unique(tms_route_id, motor_id, type)', 'Motor + Type must be unique !'),
         ]
-
-tms_route_fuelefficiency()
-
 
 # Fleet Vehicle odometer device
 class fleet_vehicle_odometer_device(osv.osv):
     _name = "fleet.vehicle.odometer.device"
     _inherit = ['mail.thread', 'ir.needaction_mixin']
     _description = "Fleet Vehicle Odometer Device"
-
 
     _columns = {
         'state'             : fields.selection([('draft','Draft'), ('active','Active'), ('inactive','Inactive'), ('cancel','Cancelled')], 'State', readonly=True),
@@ -967,19 +877,16 @@ class fleet_vehicle_odometer_device(osv.osv):
                 return False
             return True
 
-
     _constraints = [
         (_check_state, 'You can not have two records with the same State (Draft / Active) !', ['state']),
         (_check_odometer, 'You can not have Odometer End less than Odometer Start', ['odometer_end']),
         (_check_dates, 'You can not have this Star Date because is overlaping with another record', ['date_end'])
         ]
 
-
     def write(self, cr, uid, ids, vals, context=None):
         values = vals
         #print self._name, " vals: ", vals
         return super(fleet_vehicle_odometer_device, self).write(cr, uid, ids, values, context=context)
-
 
     def on_change_vehicle_id(self, cr, uid, ids, vehicle_id, date_start):
         odom_obj = self.pool.get('fleet.vehicle.odometer.device')
@@ -993,7 +900,6 @@ class fleet_vehicle_odometer_device(osv.osv):
                 accumulated = rec.vehicle_id.odometer
         return {'value': {'replacement_of': odometer_id, 'accumulated': accumulated }}
 
-    
     def action_activate(self, cr, uid, ids, context=None):
         for rec in self.browse(cr, uid, ids):
             odometer = rec.vehicle_id.odometer
@@ -1009,10 +915,6 @@ class fleet_vehicle_odometer_device(osv.osv):
         for rec in self.browse(cr, uid, ids):
             self.write(cr, uid, ids, {'state':'cancel'})
         return True
-
-
-
-fleet_vehicle_odometer_device()
 
 # Vehicle Odometer records
 class fleet_vehicle_odometer(osv.osv):
@@ -1037,11 +939,9 @@ class fleet_vehicle_odometer(osv.osv):
                 return False
             return True
 
-
     _constraints = [
         (_check_values, 'You can not have Current Reading <= Last Reading !', ['current_odometer']),
         ]
-    
 
     def on_change_vehicle(self, cr, uid, ids, vehicle_id, context=None):
         res = super(fleet_vehicle_odometer, self).on_change_vehicle(cr, uid, ids, vehicle_id, context=context)
@@ -1068,7 +968,7 @@ class fleet_vehicle_odometer(osv.osv):
                         'value'     : accum,
                         }    
                 }
-        
+
     def on_change_distance(self, cr, uid, ids, vehicle_id, last_odometer, distance, context=None):
         current_odometer = last_odometer + distance
         accum = self.pool.get('fleet.vehicle').browse(cr, uid, [vehicle_id], context=context)[0].odometer + distance
@@ -1077,7 +977,6 @@ class fleet_vehicle_odometer(osv.osv):
                         'value'             : accum,
                         }    
                 }
-
 
     def on_change_value(self, cr, uid, ids, vehicle_id, last_odometer, value, context=None):
         distance = value - self.pool.get('fleet.vehicle').browse(cr, uid, [vehicle_id], context=context)[0].odometer
@@ -1096,7 +995,6 @@ class fleet_vehicle_odometer(osv.osv):
             odometer_end = odom_obj.browse(cr, uid, [vals['odometer_id']])[0].odometer_end + vals['distance']
             odom_obj.write(cr, uid, [vals['odometer_id']], {'odometer_end': odometer_end}, context=context)
         return super(fleet_vehicle_odometer, self).create(cr, uid, values, context=context)
-
 
     def create_odometer_log(self, cr, uid, expense_id, travel_id, vehicle_id, distance, context=None):
         vehicle = self.pool.get('fleet.vehicle').browse(cr, uid, [vehicle_id])[0]
@@ -1121,7 +1019,6 @@ class fleet_vehicle_odometer(osv.osv):
                    }
         res = self.create(cr, uid, values)
         # Falta crear un método para actualizar el promedio diario de recorrido de la unidad
-        
         return
 
     def unlink_odometer_rec(self, cr, uid, ids, travel_ids, unit_id, context=None):
@@ -1149,5 +1046,3 @@ class fleet_vehicle_odometer(osv.osv):
             #print "===================================="
         self.unlink(cr, uid, res1)
         return
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

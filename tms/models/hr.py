@@ -20,15 +20,7 @@
 ##############################################################################
 
 
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
-import time
-from datetime import datetime, date
-import openerp
+from openerp.osv import osv, fields
 
 
 class hr_job(osv.osv):
@@ -42,7 +34,6 @@ class hr_job(osv.osv):
     _defaults = {
         'tms_global_salary': lambda *a: 0.0,
     }   
-
 
 class hr_employee(osv.osv):
     _description ='Employees'
@@ -77,7 +68,6 @@ class hr_employee(osv.osv):
         result = self.name_get(cr, user, ids, context=context)
         return result
 
-    
     _columns = {
         'tms_category': fields.selection([('none','N/A'),('driver','Driver'), ('mechanic','Mechanic'),], 'TMS Category', help='Used to define if this person will be used as a Driver (Frieghts related) or Mechanic (Maintenance related)',required=False),
         'tms_advance_account_id': fields.many2one('account.account', 'Advance Account', domain=[('type', '=', 'other')]), 
@@ -92,23 +82,14 @@ class hr_employee(osv.osv):
         'tms_house_rent_discount' : fields.float('Monthly House Rental Discount', digits=(18,6)),
         'tms_credit_charge_discount' : fields.float('Monthly Credit Amount Discount', digits=(18,6)),
         'tms_credit_charge_prod_id':fields.many2one('product.product', 'Credit Charge Product', domain=[('tms_category', '=', 'salary_discount')]),
-
         'tms_social_security_discount' : fields.float('Social Security Discount', digits=(18,6)),
         'tms_social_security_prod_id':fields.many2one('product.product', 'Social Security Product', domain=[('tms_category', '=', 'salary_discount')]),
         'tms_salary_tax_discount' : fields.float('Salary Tax Discount', digits=(18,6)),
         'tms_salary_tax_prod_id':fields.many2one('product.product', 'Salary Tax Product', domain=[('tms_category', '=', 'salary_retention')]),
-        
-        
         'tms_global_salary' : fields.float('Global Salary', digits=(18,6)),
         'shop_id' : fields.many2one('sale.shop', 'Shop'), #, domain=[('company_id', '=', user.company_id.id)]),
-
         }
 
     _defaults = {
         'tms_category': 'none',
-
     }
-
-hr_employee()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

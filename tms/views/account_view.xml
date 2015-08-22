@@ -63,7 +63,7 @@
                     <group colspan="4" col="4">
                         <field name="tms_type"  />
                         <field name="unit_id" />
-                        <field name="product" />
+                        <!--field name="product" /-->
                         <field name="waybill_rate" />
                         <field name="departure_id" />
                         <field name="arrival_id" />

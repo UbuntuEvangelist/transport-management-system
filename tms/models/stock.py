@@ -18,26 +18,19 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+from openerp.osv import osv, fields
+from openerp.tools.translate import _
 
-
-
-
-from osv import osv, fields
-import time
-from datetime import datetime, date
-import decimal_precision as dp
-from tools.translate import _
 
 # Add special tax calculation for Mexico
 class stock_move(osv.osv):
     _inherit ='stock.move'
-    
+
     _columns = {
         'vehicle_id'    : fields.many2one('fleet.vehicle', 'Vehicle', readonly=True, required=False),
         'employee_id'   : fields.many2one('hr.employee', 'Driver', readonly=True, required=False),
         'fuelvoucher_id': fields.many2one('tms.fuelvoucher', 'Fuel Voucher', readonly=True, required=False),
     }
-    
 
     def _create_account_move_line(self, cr, uid, move, src_account_id, dest_account_id, reference_amount, reference_currency_id, context=None):
         #print "Si entra en _create_account_move_line"
@@ -58,5 +51,3 @@ class stock_move(osv.osv):
 
         #print "_create_account_move_line: ", res
         return res
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

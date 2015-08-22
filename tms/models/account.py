@@ -19,14 +19,8 @@
 #
 ##############################################################################
 
+from openerp.osv import osv, fields
 
-
-
-from osv import osv, fields
-import time
-from datetime import datetime, date
-import decimal_precision as dp
-import openerp
 
 # Add special tax calculation for Mexico
 class account_tax(osv.osv):
@@ -43,9 +37,6 @@ class account_tax(osv.osv):
         return {
             'res': res
         }
-
-account_tax()
-
 
 # Additionat field to set Account Journal for Advances and Travel Expenses
 class account_journal(osv.osv):
@@ -68,9 +59,6 @@ class account_journal(osv.osv):
         'tms_expense_suppliers_journal' : lambda *a :False,
         }
 
-account_journal()
-
-
 # Additionat field to set Account Journal for Advances and Travel Expenses
 class account_account(osv.osv):
     _inherit ='account.account'
@@ -86,10 +74,6 @@ class account_account(osv.osv):
         'tms_employee_mandatory' : lambda *a :False,
         'tms_sale_shop_mandatory' : lambda *a :False,
         }
-
-account_journal()
-
-
 
 # Fields <vechicle_id>, <employee_id> added to acount_move_line for reporting and analysis and constraint added
 class account_move_line(osv.osv):
@@ -122,7 +106,3 @@ class account_move_line(osv.osv):
         (_check_mandatory_employee, 'Error ! You have not added Employee to Move Line', ['employee_id']),
         (_check_mandatory_sale_shop, 'Error ! You have not added Sale Shop to Move Line', ['sale_shop_id']),
         ]
-
-account_move_line()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

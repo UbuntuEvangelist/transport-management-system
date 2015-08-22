@@ -2,7 +2,7 @@
 <data>
 
 
-<!-- Inheritance for ir.sequence to assign a Sequence for each Shop -->
+<!-- Inheritance for ir.sequence to assign a Sequence for each Shop 
     <record model="ir.ui.view" id="tms_view_shop_form">
         <field name="name">TMS sale.shop.form</field>
         <field name="model">sale.shop</field>
@@ -35,7 +35,7 @@
                 </group>
             </xpath> 
         </field>
-    </record>
+    </record>-->
 
 </data>
 </openerp>

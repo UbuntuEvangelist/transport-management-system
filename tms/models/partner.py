@@ -18,16 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
-
-
-from osv import osv, fields
-import netsvc
-import pooler
-from tools.translate import _
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
-import time
-from datetime import datetime, date
+from openerp.osv import osv, fields
 
 
 # TMS - Special Category for TMS module
@@ -59,12 +50,6 @@ class res_partner(osv.osv):
                     return False
         return True
 
-    
     _constraints = [
         (_check_fuel_internal, 'Error ! You can not have two or more Partners defined for Internal Warehouse Fuel', ['tms_fuel_internal']),
         ]
-
-    
-res_partner()
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
