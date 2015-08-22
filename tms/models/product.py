@@ -82,13 +82,13 @@ class product_product(osv.osv):
     def _check_tms_product(self, cr, uid, ids, context=None):
         for record in self.browse(cr, uid, ids, context=context): 
             if record.tms_category in ['transportable']:
-                return (record.type=='service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and not record.sale_ok and not record.purchase_ok)
+                return (record.type == 'service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and not record.sale_ok and not record.purchase_ok)
             elif record.tms_category in ['freight', 'move','insurance','highway_tolls','other']:
-                return (record.type=='service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.sale_ok)
+                return (record.type == 'service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.sale_ok)
             elif record.tms_category in ['real_expense', 'madeup_expense', 'salary', 'salary_retention', 'salary_discount', 'negative_balance', 'indirect_expense']:
-                return (record.type=='service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.purchase_ok)
+                return (record.type == 'service' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.purchase_ok)
             elif record.tms_category in ['fuel']:
-                return (record.type=='product' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.purchase_ok)
+                return (record.type == 'product' and record.procure_method == 'make_to_stock' and record.supply_method =='buy' and record.purchase_ok)
 
         return True
 
